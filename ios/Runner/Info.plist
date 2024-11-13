@@ -42,21 +42,17 @@
 	<key>NSCameraUsageDescription</key>
 	<string>This app requires to access your photo library to show image on profile and send via chat</string>
 	<key>NSLocationAlwaysAndWhenInUsageDescription</key>
-	<string>This app requires to access your location for accpeting requests</string>
+	<string>This app requires to access your location for searching nearby business user</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app requires to access your location for accpeting requests</string>
+	<string>This app requires to access your location for searching nearby business user</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app requires to access your location for accpeting requests</string>
+	<string>This app requires to access your location for searching nearby business user</string>
 	<key>NSLocationUsageDescription</key>
-	<string>This app requires to access your location for accpeting requests</string>
-	<key>NSLocationWhenInUsageDescription</key>
-	<string>This app requires to access your location for accpeting requests</string>
+	<string>This app requires to access your location for searching nearby business user</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Needed to access location when the app is open and run in background.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app requires to access your microphone to record video with your voice send via chat</string>
+	<string>This app requires to access location when the app is open or run in background for searching nearby business user.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app requires to access your photo library to show image on profile and send via chat</string>
+	<string>This app requires to access your photo library to show image for upload on profile/offer</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -64,10 +60,17 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<!-- <key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string> -->
 	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+	<string></string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<!-- Manage Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<!-- Manage Compliance -->
+
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

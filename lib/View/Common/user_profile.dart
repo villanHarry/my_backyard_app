@@ -234,72 +234,79 @@ class _UserProfileState extends State<UserProfile> {
                           height: 2.h,
                         ),
                         if (i == items[0]) ...[
-                          //   Container(
-                          //     decoration: BoxDecoration(
-                          //         color: MyColors().primaryColor,
-                          //         borderRadius: BorderRadius.circular(10)),
-                          //     padding: EdgeInsets.all(12),
-                          //     child: Row(
-                          //       children: [
-                          //         Image.asset(
-                          //           ImagePath.offer,
-                          //           scale: 2,
-                          //         ),
-                          //         SizedBox(
-                          //           width: 2.w,
-                          //         ),
-                          //         Expanded(
-                          //           child: Column(
-                          //             crossAxisAlignment:
-                          //                 CrossAxisAlignment.start,
-                          //             children: [
-                          //               MyText(
-                          //                 title:
-                          //                     'Extra 25%, off, up to \$\$. 3,000.00',
-                          //                 fontWeight: FontWeight.w600,
-                          //                 clr: MyColors().whiteColor,
-                          //               ),
-                          //               MyText(
-                          //                 title: 'Promo Code SAVE. Ends 6/9.',
-                          //                 clr: MyColors().whiteColor,
-                          //               ),
-                          //             ],
-                          //           ),
-                          //         ),
-                          //         SizedBox(
-                          //           width: 2.w,
-                          //         ),
-                          //         MyButton(
-                          //           title: 'Apply',
-                          //           onTap: () {},
-                          //           gradient: false,
-                          //           bgColor: MyColors().black,
-                          //           borderColor: MyColors().black,
-                          //           textColor: MyColors().whiteColor,
-                          //           height: 5.2.h,
-                          //           width: 24.w,
-                          //         ),
-                          //       ],
-                          //     ),
-                          //   ),
-                          //   SizedBox(
-                          //     height: 2.h,
-                          //   ),
-                          Consumer<HomeController>(builder: (context, val, _) {
-                            if (val.loading) {
-                              return CircularProgressIndicator(
+                          Container(
+                            decoration: BoxDecoration(
                                 color: MyColors().primaryColor,
-                              );
-                            } else {
-                              return ListView.builder(
-                                  itemCount: val.offers?.length,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 3.w, vertical: 0.h),
-                                  physics: NeverScrollableScrollPhysics(),
-                                  shrinkWrap: true,
-                                  itemBuilder: (_, index) => OfferTile());
-                            }
-                          })
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Image.asset(
+                                  ImagePath.offer,
+                                  scale: 2,
+                                ),
+                                SizedBox(
+                                  width: 2.w,
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      MyText(
+                                        title:
+                                            'Extra 25%, off, up to \$\$. 3,000.00',
+                                        fontWeight: FontWeight.w600,
+                                        clr: MyColors().whiteColor,
+                                      ),
+                                      MyText(
+                                        title: 'Promo Code SAVE. Ends 6/9.',
+                                        clr: MyColors().whiteColor,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 2.w,
+                                ),
+                                MyButton(
+                                  title: 'Apply',
+                                  onTap: () {},
+                                  gradient: false,
+                                  bgColor: MyColors().black,
+                                  borderColor: MyColors().black,
+                                  textColor: MyColors().whiteColor,
+                                  height: 5.2.h,
+                                  width: 24.w,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 2.h,
+                          ),
+                          ListView.builder(
+                              itemCount: 10,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 3.w, vertical: 0.h),
+                              physics: const NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemBuilder: (_, index) => OfferTile())
+                          // Consumer<HomeController>(builder: (context, val, _) {
+                          //   if (val.loading) {
+                          //     return CircularProgressIndicator(
+                          //       color: MyColors().primaryColor,
+                          //     );
+                          //   } else {
+                          //     return ListView.builder(
+                          //         itemCount: val.offers?.length,
+                          //         padding: EdgeInsets.symmetric(
+                          //             horizontal: 3.w, vertical: 0.h),
+                          //         physics: NeverScrollableScrollPhysics(),
+                          //         shrinkWrap: true,
+                          //         itemBuilder: (_, index) => OfferTile());
+                          //   }
+                          // })
                         ],
                         if (i == items[1]) ...[
                           MyText(
@@ -379,7 +386,7 @@ class _UserProfileState extends State<UserProfile> {
                                 clr: Color(0xff717171),
                               ),
                               MyText(
-                                title: '8 AM–5 PM',
+                                title: '8 AM-5 PM',
                                 fontWeight: FontWeight.w600,
                                 clr: Color(0xffB9BCBE),
                               ),

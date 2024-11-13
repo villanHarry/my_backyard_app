@@ -82,7 +82,6 @@ class SearchResult extends StatelessWidget {
                         shrinkWrap: true,
                         itemBuilder: (_, index) =>
                             businessTile(img: i[index], context: context))),
-
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 3.w),
                   child: MyText(
@@ -91,25 +90,25 @@ class SearchResult extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                // offerList(s:d.completedSessions),
+                offerList(),
               ],
             );
           }),
         ));
   }
 
-  // Widget offerList({required RxList<SessionModel> s}){
-  //   return Expanded(
-  //       child: s.isNotEmpty?CustomEmptyData(title: 'No Offers'):
-  //       ListView.builder(
-  //         // itemCount:s.length,
-  //           padding: EdgeInsets.symmetric(horizontal: 3.w,vertical: 0.h),
-  //           physics: AlwaysScrollableScrollPhysics(parent: const ClampingScrollPhysics()),
-  //           shrinkWrap: true,
-  //           itemBuilder: (_, index) =>OfferTile()
-  //       )
-  //   );
-  // }
+  Widget offerList() {
+    return Expanded(
+        child: ListView.builder(
+            // itemCount:s.length,
+            itemCount: 10,
+            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.h),
+            physics: AlwaysScrollableScrollPhysics(
+                parent: const ClampingScrollPhysics()),
+            shrinkWrap: true,
+            itemBuilder: (_, index) => OfferTile()));
+  }
+
   businessTile({String? img, required BuildContext context}) {
     return Padding(
       padding: EdgeInsets.only(right: 3.w),

@@ -39,7 +39,7 @@ class UserController extends ChangeNotifier {
                 circleId: const CircleId("myLocation"),
                 radius: 1 * 1609.344,
                 strokeWidth: 1,
-                zIndex: 1,
+                zIndex: 0,
                 center: LatLng(event.latitude, event.longitude),
                 fillColor: MyColors().primaryColor.withOpacity(.15),
                 strokeColor: MyColors().primaryColor));
