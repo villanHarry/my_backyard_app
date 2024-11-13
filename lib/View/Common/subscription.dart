@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 
@@ -33,38 +35,105 @@ class SubscriptionScreen extends StatefulWidget {
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
+  late final user = context.read<UserController>().user;
+  StreamSubscription<List<PurchaseDetails>>? purchaseStream;
+
   @override
   void initState() {
-    // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-    //   AppInAppPurchase().fetchSubscriptions([subscription_enums.user_sub.name]);
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      if (user?.role == Role.Business) {
+        await AppInAppPurchase().fetchSubscriptions([
+          subscription_enums.bus_sub_monthly.name,
+          subscription_enums.bus_sub_annually.name
+        ]);
+      } else {
+        await AppInAppPurchase()
+            .fetchSubscriptions([subscription_enums.user_sub.name]);
+      }
+    });
+    purchaseStream = AppInAppPurchase().purchaseStream.listen((event) {
+      AppInAppPurchase().handlePurchaseUpdates(event);
+    });
     // TODO: implement initState
     super.initState();
+  }
+
+  String getPrice(String e, String price) {
+    switch (e) {
+      case "user_sub":
+        return '$price Annually';
+      case "bus_sub_monthly":
+        return '$price Monthy';
+      case "bus_sub_annually":
+        return '$price Annually';
+      default:
+        return "";
+    }
+  }
+
+  List<String> getPoints(String e) {
+    switch (e) {
+      case "user_sub":
+        return [
+          "Subscribers save money enjoying a whole year, making it a more economical for long-term users.",
+          "Subscribers may benefit from additional perks such as:\n• Discounts on future subscriptions.\n• Access to special events and promotions.\n• Fostering a sense of community and appreciation."
+        ];
+
+      case "bus_sub_monthly":
+        return [
+          'Business Subscribers can enjoy access of the following:',
+          'A month-to-month service to reach the local community.'
+        ];
+      case "bus_sub_annually":
+        return [
+          "Annual business subscribers receive 20% off versus month to month business users.",
+          "Also exclusive access to the following:\n• New features.\n• Updates.\n• Improvements throughout the year.",
+          "Ensuring they always have the latest tools and enhancements at their fingertips."
+        ];
+      default:
+        return [];
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BaseView(
-      screenTitle: 'Choose your package',
-      bgImage: '',
-      showAppBar: true,
-      showBackButton: true,
-      // backgroundColor: Colors.white,
-      child: PageView.builder(
-          itemCount: s.length,
-          scrollDirection: Axis.horizontal,
-          physics: const AlwaysScrollableScrollPhysics(
-              parent: ClampingScrollPhysics()),
-          itemBuilder: (_, index) => Column(
-                children: [
-                  subscriptionTile(context: context, m: s[index]),
-                ],
-              )),
-    );
+        screenTitle: 'Choose your package',
+        bgImage: '',
+        showAppBar: true,
+        showBackButton: true,
+        // backgroundColor: Colors.white,
+        child: Consumer<UserController>(
+          builder: (context, value, child) {
+            if (value.loading) {
+              return Center(
+                  child: CircularProgressIndicator(
+                color: MyColors().greenColor,
+              ));
+            } else {
+              return PageView.builder(
+                  itemCount: value.productDetails.length,
+                  scrollDirection: Axis.horizontal,
+                  physics: const AlwaysScrollableScrollPhysics(
+                      parent: ClampingScrollPhysics()),
+                  itemBuilder: (_, index) => Column(
+                        children: [
+                          subscriptionTile(
+                              value: value,
+                              context: context,
+                              m: value.productDetails[index]),
+                        ],
+                      ));
+            }
+          },
+        ));
   }
 
   Widget subscriptionTile(
-      {required BuildContext context, required MenuModel m}) {
+      {required BuildContext context,
+      //required MenuModel m
+      UserController? value,
+      required ProductDetails m}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -96,13 +165,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             child: Column(
               children: [
                 MyText(
-                  title: m.name ?? '',
+                  title: m.title,
                   clr: MyColors().whiteColor,
                   fontWeight: FontWeight.w600,
                   size: 18,
                 ),
                 MyText(
-                  title: m.subTitle ?? '',
+                  title: getPrice(m.id, m.price),
                   clr: MyColors().whiteColor,
                   fontWeight: FontWeight.w600,
                   size: 18,
@@ -111,7 +180,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ),
           ),
           SizedBox(height: 2.h),
-          for (int i = 0; i < m.points.length; i++)
+          for (int i = 0; i < getPoints(m.id).length; i++)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 4.w) +
                   EdgeInsets.only(bottom: 2.h),
@@ -127,62 +196,70 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   ),
                   Expanded(
                       child: MyText(
-                    title: m.points[i],
+                    title: getPoints(m.id)[i],
                     size: 14,
                     clr: MyColors().black,
                   )),
                 ],
               ),
             ),
-          MyButton(
-            onTap: () async {
-              if (widget.fromCompleteProfile) {
-                // AppNavigation.navigateTo(AppRouteName.ADD_CARD_ROUTE,
-                //     arguments:
-                //         ScreenArguments(args: {"price": m.price}));
-                // CustomToast().showToast(
-                //     message: 'Subscription purchased successfully');
-                ///
-                ///
-                AppNetwork.loadingProgressIndicator();
-                final user = context.read<UserController>().user;
-                final result = await AuthAPIS.completeProfile(
-                  firstName: user?.name,
-                  lastName: user?.lastName,
-                  description: user?.description,
-                  address: user?.address,
-                  lat: user?.latitude,
-                  long: user?.longitude,
-                  email: user?.email,
-                  phone: user?.phone,
-                  days: user?.days,
-                  image: File(user?.profileImage ?? ""),
-                );
-                AppNavigation.navigatorPop();
-                if (result) {
-                  completeDialog(onTap: () {
-                    AppNavigation.navigateToRemovingAll(
-                        AppRouteName.HOME_SCREEN_ROUTE);
-                  });
-                }
-              } else {
-                // AppInAppPurchase().completePurchase(PurchaseDetails(
-                //     productID: "bus_sub_annually",
-                //     verificationData: PurchaseVerificationData(
-                //         localVerificationData: "",
-                //         serverVerificationData: "",
-                //         source: ""),
-                //     transactionDate: DateTime.timestamp().toString(),
-                //     status: PurchaseStatus.pending));
-                AppNavigation.navigatorPop();
-              }
+          FutureBuilder(
+              future: AppInAppPurchase().isSubscriptionActive(m.id),
+              builder: (context, snapshot) {
+                return snapshot.connectionState == ConnectionState.done
+                    ? MyButton(
+                        onTap: () async {
+                          if (value?.purchaseLoading == false &&
+                              (snapshot.data ?? false) == false) {
+                            if (widget.fromCompleteProfile) {
+                              // AppNavigation.navigateTo(AppRouteName.ADD_CARD_ROUTE,
+                              //     arguments:
+                              //         ScreenArguments(args: {"price": m.price}));
+                              // CustomToast().showToast(
+                              //     message: 'Subscription purchased successfully');
+                              ///
+                              ///
+                              AppNetwork.loadingProgressIndicator();
+                              final user = context.read<UserController>().user;
+                              final result = await AuthAPIS.completeProfile(
+                                firstName: user?.name,
+                                lastName: user?.lastName,
+                                description: user?.description,
+                                address: user?.address,
+                                lat: user?.latitude,
+                                long: user?.longitude,
+                                email: user?.email,
+                                phone: user?.phone,
+                                days: user?.days,
+                                image: File(user?.profileImage ?? ""),
+                              );
+                              AppNavigation.navigatorPop();
+                              if (result) {
+                                completeDialog(onTap: () {
+                                  AppNavigation.navigateToRemovingAll(
+                                      AppRouteName.HOME_SCREEN_ROUTE);
+                                });
+                              }
+                            } else {
+                              AppInAppPurchase().buySubscription(m);
+                              // AppNavigation.navigatorPop();
+                            }
+                          }
 
-              ///
-              ///
-            },
-            title: "Continue",
-            width: 80.w,
-          ),
+                          ///
+                          ///
+                        },
+                        loading: value?.purchaseLoading,
+                        title: (snapshot.data ?? false)
+                            ? "Subscribed"
+                            : "Continue",
+                        width: 80.w,
+                      )
+                    : Center(
+                        child: CircularProgressIndicator(
+                            color: MyColors().greenColor),
+                      );
+              }),
           SizedBox(height: 2.h),
         ],
       ),

@@ -65,6 +65,12 @@ class UserController extends ChangeNotifier {
   Set<Marker> markers = {};
   List<in_app.ProductDetails> productDetails = [];
   bool loading = false;
+  bool purchaseLoading = false;
+
+  void setPurchaseLoading(bool val) {
+    purchaseLoading = val;
+    notifyListeners();
+  }
 
   void setLoading(bool val) {
     loading = val;

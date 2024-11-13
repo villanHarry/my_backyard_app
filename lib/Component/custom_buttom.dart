@@ -10,6 +10,7 @@ class MyButton extends StatelessWidget {
   bool gradient = false, showPrefix;
   IconData? prefixIconData;
   Color? prefixIconColor;
+  bool? loading;
   double? prefixIconSize;
   MainAxisAlignment mainAxisAlignment;
 
@@ -26,6 +27,7 @@ class MyButton extends StatelessWidget {
       this.horPadding,
       this.showPrefix = false,
       this.fontSize,
+      this.loading,
       this.gradient = false,
       this.weight,
       this.width,
@@ -71,34 +73,40 @@ class MyButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: mainAxisAlignment,
           children: [
-            showPrefix == true
-                ? prefixIconData != null
-                    ? Icon(
-                        prefixIconData,
-                        size: prefixIconSize,
-                        color: prefixIconColor,
-                      )
-                    : Image.asset(prefixIconPath ?? '',
-                        scale: prefixIconSize ?? 3, color: prefixIconColor)
-                : Container(),
-            SizedBox(
-              width: showPrefix == true ? 10 : 0,
-            ),
-            Flexible(
-              child: Padding(
-                padding: prefixIconData != null
-                    ? const EdgeInsets.only(left: 5.0)
-                    : const EdgeInsets.only(left: 0),
-                child: MyText(
-                  toverflow: TextOverflow.ellipsis,
-                  title: title!,
-                  clr: textColor ?? Colors.white,
-                  weight: weight,
-                  fontWeight: FontWeight.w600,
-                  size: fontSize ?? 16,
+            if (loading ?? false) ...[
+              const Spacer(),
+              CircularProgressIndicator(color: MyColors().greenColor),
+              const Spacer(),
+            ] else ...[
+              showPrefix == true
+                  ? prefixIconData != null
+                      ? Icon(
+                          prefixIconData,
+                          size: prefixIconSize,
+                          color: prefixIconColor,
+                        )
+                      : Image.asset(prefixIconPath ?? '',
+                          scale: prefixIconSize ?? 3, color: prefixIconColor)
+                  : Container(),
+              SizedBox(
+                width: showPrefix == true ? 10 : 0,
+              ),
+              Flexible(
+                child: Padding(
+                  padding: prefixIconData != null
+                      ? const EdgeInsets.only(left: 5.0)
+                      : const EdgeInsets.only(left: 0),
+                  child: MyText(
+                    toverflow: TextOverflow.ellipsis,
+                    title: title!,
+                    clr: textColor ?? Colors.white,
+                    weight: weight,
+                    fontWeight: FontWeight.w600,
+                    size: fontSize ?? 16,
+                  ),
                 ),
               ),
-            ),
+            ]
           ],
         ),
       ),
