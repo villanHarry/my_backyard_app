@@ -49,7 +49,7 @@ class _DeleteDialogState extends State<DeleteDialog> {
           children: [
             Container(
               decoration: BoxDecoration(
-                  color: MyColors().secondaryColor,
+                  color: MyColors().primaryColor,
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(20))),
               padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 3.w),
@@ -176,15 +176,12 @@ class _DeleteDialogState extends State<DeleteDialog> {
                         AppNavigation.navigatorPop();
                       },
                       child: MyText(
-                        title: 'Not Now!',
-                        size: 17,
-                        center: true,
-                        clr: MyColors().primaryColor,
-                        fontWeight: FontWeight.w600,
-                      )),
-                  SizedBox(
-                    height: 3.5.h,
-                  ),
+                          title: 'Not Now!',
+                          size: 17,
+                          center: true,
+                          clr: MyColors().primaryColor,
+                          fontWeight: FontWeight.w600)),
+                  SizedBox(height: 1.5.h),
                 ],
               ),
             ),

@@ -8,22 +8,17 @@ class SharedPreference {
   SharedPreference._createInstance();
   factory SharedPreference() {
     // factory with constructor, return some value
-    if (_sharedPreferenceHelper == null) {
-      _sharedPreferenceHelper = SharedPreference
-          ._createInstance(); // This is executed only once, singleton object
-    }
+    _sharedPreferenceHelper ??= SharedPreference._createInstance();
     return _sharedPreferenceHelper!;
   }
   Future<SharedPreferences> get sharedPreference async {
-    if (_sharedPreferences == null) {
-      _sharedPreferences = await SharedPreferences.getInstance();
-    }
+    _sharedPreferences ??= await SharedPreferences.getInstance();
     return _sharedPreferences!;
   }
 
   ////////////////////// Clear Preference ///////////////////////////
   void clear() {
-    _sharedPreferences!.clear();
+    _sharedPreferences?.clear();
   }
 
   ////////////////////// User ///////////////////////////
@@ -32,6 +27,19 @@ class SharedPreference {
       user?.addAll({"bearer_token": token});
     }
     await _sharedPreferences?.setString("user", json.encode(user));
+  }
+
+  Future<void> saveUser({Map<String, dynamic>? user}) async {
+    await _sharedPreferences?.setString("saved_user", json.encode(user));
+  }
+
+  Map<String, dynamic>? getSavedUser() {
+    String? val = _sharedPreferences?.getString("saved_user");
+    if (val != null) {
+      return json.decode(val);
+    } else {
+      return null;
+    }
   }
 
   Map<String, dynamic>? getUser() {

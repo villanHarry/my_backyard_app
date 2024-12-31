@@ -57,7 +57,6 @@ class BaseView extends StatelessWidget {
     this.trailingAppBar,
     this.showBottomBar = false,
   });
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -98,10 +97,8 @@ class BaseView extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.symmetric(
                             vertical: .6.h, horizontal: 1.h),
-                        child: Image.asset(
-                          ImagePath.back,
-                          scale: 2,
-                        ),
+                        child: Image.asset(ImagePath.back,
+                            scale: 2, color: backColor),
                       ),
                     ),
               centerTitle: true,

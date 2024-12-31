@@ -16,12 +16,22 @@ import '../../Component/custom_bottomsheet_indicator.dart';
 import '../../Utils/app_size.dart';
 
 class SearchTile extends StatefulWidget {
-  SearchTile({Key? key,this.onChange, this.search,this.showFilter=true,this.readOnly=false,this.onTap,this.onTapFilter}) : super(key: key);
+  SearchTile(
+      {Key? key,
+      this.onChange,
+      this.disabled = false,
+      this.search,
+      this.showFilter = true,
+      this.readOnly = false,
+      this.onTap,
+      this.onTapFilter})
+      : super(key: key);
   TextEditingController? search;
   final Function(String)? onChange;
-  final Function? onTap,onTapFilter;
+  final Function? onTap, onTapFilter;
   bool showFilter;
-  bool readOnly=false;
+  bool disabled;
+  bool readOnly = false;
 
   @override
   State<SearchTile> createState() => _SearchTileState();
@@ -40,16 +50,16 @@ class _SearchTileState extends State<SearchTile> {
     return Container(
       // height: 5.5.h,
       decoration: BoxDecoration(
-        border: Border.all(
-          color: MyColors().lightGreyColor,
-        ),
-        borderRadius: BorderRadius.circular(8)
-      ),
+          border: Border.all(
+            color: MyColors().lightGreyColor,
+          ),
+          borderRadius: BorderRadius.circular(8)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Flexible(
             child: MyTextField(
+              enable: !widget.disabled,
               hintText: "Search...",
               controller: widget.search,
               onChanged: widget.onChange,
@@ -58,34 +68,39 @@ class _SearchTileState extends State<SearchTile> {
               borderRadius: 8,
               backgroundColor: MyColors().whiteColor,
               // borderColor: MyColors().lightGreyColor,
-              textColor:MyColors().black,
-              hintTextColor:MyColors().greyColor,
+              textColor: MyColors().black,
+              hintTextColor: MyColors().greyColor,
               onTap: widget.onTap,
-              prefixWidget: Icon(Icons.search,color: MyColors().primaryColor,),
+              prefixWidget: Icon(
+                Icons.search,
+                color: MyColors().primaryColor,
+              ),
               onTapSuffixIcon: () {},
               // suffixIconData: Image.asset(ImagePath.filterIcon,scale: 4,)
               // suffixIcons: Image.asset(ImagePath.filterIcon,scale: 4,)
             ),
           ),
-          if(widget.showFilter)...[
-            SizedBox(width: 2.w,),
-            FilterIcon(onTap: (){
-              FocusManager.instance.primaryFocus?.unfocus();
-              if(widget.onTapFilter!=null){
-                widget.onTapFilter!();
-              }
-            },),
-            SizedBox(width: 2.w,),
+          if (widget.showFilter) ...[
+            SizedBox(
+              width: 2.w,
+            ),
+            FilterIcon(
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                if (widget.onTapFilter != null) {
+                  widget.onTapFilter!();
+                }
+              },
+            ),
+            SizedBox(
+              width: 2.w,
+            ),
           ],
         ],
       ),
     );
   }
 
-
-  onSubmit(context){
-  }
-  setFilter(){
-
-  }
+  onSubmit(context) {}
+  setFilter() {}
 }

@@ -7,6 +7,7 @@ class StateManagement {
   static List<SingleChildWidget> providersList = [
     ChangeNotifierProvider(
         create: (context) => UserController(context: context)),
-    ChangeNotifierProvider(create: (context) => HomeController()),
+    ChangeNotifierProvider(
+        create: (context) => HomeController(context: context)),
   ];
 }

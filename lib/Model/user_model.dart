@@ -1,3 +1,4 @@
+import 'package:backyard/Model/day_schedule.dart';
 import 'package:backyard/Utils/enum.dart';
 
 class User {
@@ -23,44 +24,51 @@ class User {
   int? categoryId;
   String? description;
   int? isBlocked;
+  int? isVerified;
+  int? isForgot;
   String? status;
   int? subId;
   DateTime? createdAt;
   DateTime? updatedAt;
   List<BussinessScheduling>? days;
+  int? offerCount;
 
-  User({
-    this.id,
-    this.role,
-    this.name,
-    this.lastName,
-    this.profileImage,
-    this.token,
-    this.address,
-    this.latitude,
-    this.longitude,
-    this.days,
-    this.description,
-    this.categoryId,
-    this.email,
-    this.emailOtp,
-    this.emailVerifiedAt,
-    this.phone,
-    this.subId,
-    this.isProfileCompleted,
-    this.isPushNotify,
-    this.deviceType,
-    this.deviceToken,
-    this.socialType,
-    this.socialToken,
-    this.isBlocked,
-    this.status,
-    this.createdAt,
-    this.updatedAt,
-  });
+  User(
+      {this.id,
+      this.role,
+      this.name,
+      this.lastName,
+      this.profileImage,
+      this.token,
+      this.address,
+      this.latitude,
+      this.longitude,
+      this.days,
+      this.description,
+      this.categoryId,
+      this.email,
+      this.emailOtp,
+      this.emailVerifiedAt,
+      this.phone,
+      this.subId,
+      this.isProfileCompleted,
+      this.isPushNotify,
+      this.deviceType,
+      this.deviceToken,
+      this.socialType,
+      this.socialToken,
+      this.isBlocked,
+      this.isVerified,
+      this.isForgot,
+      this.status,
+      this.createdAt,
+      this.updatedAt,
+      this.offerCount});
 
   factory User.setUser(Map<String, dynamic> json) => User(
         id: json["id"],
+        isForgot: json["is_forgot"],
+        isVerified: json["is_verified"],
         role: getRole(json["role"]),
         name: json["name"],
         lastName: json["last_name"],
@@ -101,14 +109,20 @@ class User {
         updatedAt: json["updated_at"] == null
             ? null
             : DateTime.parse(json["updated_at"]),
+        offerCount: json["offer_count"] == null
+            ? null
+            : int.parse(json["offer_count"].toString()),
       );
 
   factory User.setUser2(Map<String, dynamic> json, {String? token}) => User(
         id: json["id"],
+        isForgot: json["is_forgot"],
+        isVerified: json["is_verified"],
         role: getRole(json["role"]),
         token: token ?? json["bearer_token"],
         name: json["name"],
         lastName: json["last_name"],
+        description: json["description"],
         days: json["days"] == null
             ? []
             : sortingDays(List<BussinessScheduling>.from(
@@ -157,6 +171,27 @@ class User {
     final days = daysOfWeek.values.map((e) => e.name).toList();
     final list = val;
 
+    int daysSorting(String val) {
+      switch (val) {
+        case "monday":
+          return 0;
+        case "tuesday":
+          return 1;
+        case "wednesday":
+          return 2;
+        case "thursday":
+          return 3;
+        case "friday":
+          return 4;
+        case "saturday":
+          return 5;
+        case "sunday":
+          return 6;
+        default:
+          return -1;
+      }
+    }
+
     for (var value in list) {
       days.remove(value.day);
     }
@@ -166,8 +201,14 @@ class User {
         list.add(BussinessScheduling(day: day));
       }
     }
+    List<BussinessScheduling> retList = [];
+    retList.addAll(list);
 
-    return list;
+    for (var element in list) {
+      retList[daysSorting(element.day ?? "")] = element;
+    }
+
+    return retList;
   }
 
   set setRole(Role val) => role = val;

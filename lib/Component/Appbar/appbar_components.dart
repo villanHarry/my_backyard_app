@@ -27,7 +27,7 @@ class MenuIcon extends StatelessWidget {
           image: ImagePath.menuIcon,
           onTap: () {
             FocusManager.instance.primaryFocus?.unfocus();
-            val.drawerKey.currentState?.openDrawer();
+            val.drawerKey?.currentState?.openDrawer();
           });
     });
   }

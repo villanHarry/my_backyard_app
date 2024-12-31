@@ -14,6 +14,7 @@ class MyText extends StatefulWidget {
   final bool? center;
   final int? line;
   final bool? under, cut;
+  final TextAlign? align;
   final List<FontFeature>? fontFeatures;
 
   const MyText(
@@ -24,6 +25,7 @@ class MyText extends StatefulWidget {
       this.fontFeatures,
       this.weight,
       this.height,
+      this.align,
       this.fontWeight,
       this.center,
       this.line,
@@ -64,11 +66,12 @@ class _MyTextState extends State<MyText> {
                       : widget.weight == "Semi Bold"
                           ? FontWeight.w600
                           : FontWeight.w500)),
-      textAlign: widget.center == null
-          ? TextAlign.left
-          : widget.center!
-              ? TextAlign.center
-              : TextAlign.left,
+      textAlign: widget.align ??
+          (widget.center == null
+              ? TextAlign.left
+              : widget.center!
+                  ? TextAlign.center
+                  : TextAlign.left),
     );
   }
 }

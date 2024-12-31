@@ -1,5 +1,12 @@
+import 'package:backyard/Model/category_model.dart';
+
 class Offer {
   int? id;
+  int? offerId;
+  int? userId;
+  int? isClaimed;
+  DateTime? createdAt;
+  DateTime? updatedAt;
   String? title;
   String? image;
   int? categoryId;
@@ -9,13 +16,17 @@ class Offer {
   int? rewardPoints;
   String? shortDetail;
   String? description;
-  DateTime? createdAt;
-  DateTime? updatedAt;
-  int? isClaimed;
+  String? address;
+  CategoryModel? category;
   int? isAvailed;
 
   Offer({
     this.id,
+    this.offerId,
+    this.userId,
+    this.isClaimed,
+    this.createdAt,
+    this.updatedAt,
     this.title,
     this.image,
     this.categoryId,
@@ -25,47 +36,35 @@ class Offer {
     this.rewardPoints,
     this.shortDetail,
     this.description,
-    this.createdAt,
-    this.updatedAt,
-    this.isClaimed,
+    this.address,
+    this.category,
     this.isAvailed,
   });
 
   factory Offer.fromJson(Map<String, dynamic> json) => Offer(
         id: json["id"],
-        title: json["title"],
-        image: json["image"],
-        categoryId: json["category_id"],
-        ownerId: json["owner_id"],
-        actualPrice: json["actual_price"],
-        discountPrice: json["discount_price"],
-        rewardPoints: json["reward_points"],
-        shortDetail: json["short_detail"],
-        description: json["description"],
+        offerId: json["offer_id"],
+        userId: json["user_id"],
+        isClaimed: json["is_claimed"],
         createdAt: json["created_at"] == null
             ? null
             : DateTime.parse(json["created_at"]),
         updatedAt: json["updated_at"] == null
             ? null
             : DateTime.parse(json["updated_at"]),
-        isClaimed: json["is_claimed"],
+        title: json["title"],
+        image: json["image"],
+        categoryId: json["category_id"],
+        ownerId: json["owner_id"],
+        actualPrice: double.parse(json["actual_price"].toString()),
+        discountPrice: double.parse(json["discount_price"].toString()),
+        rewardPoints: json["reward_points"],
+        shortDetail: json["short_detail"],
+        description: json["description"],
+        address: json["address"],
+        category: json["category"] == null
+            ? null
+            : CategoryModel.fromJson(json["category"]),
         isAvailed: json["is_availed"],
       );
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "title": title,
-        "image": image,
-        "category_id": categoryId,
-        "owner_id": ownerId,
-        "actual_price": actualPrice,
-        "discount_price": discountPrice,
-        "reward_points": rewardPoints,
-        "short_detail": shortDetail,
-        "description": description,
-        "created_at": createdAt?.toIso8601String(),
-        "updated_at": updatedAt?.toIso8601String(),
-        "is_claimed": isClaimed,
-        "is_availed": isAvailed,
-      };
 }

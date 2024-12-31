@@ -18,6 +18,9 @@ class ImagePath {
   static const String shadow = "${imagePath}shadow.png";
   static const String offer = "${iconPath}offer.png";
 
+  static const String showPass = "${iconPath}Icon ionic-ios-eye-off.png";
+  static const String showPass2 = "${iconPath}eye open.png";
+
   ///
   static const String editImage = "${iconPath}edit_img.png";
   static const String savedOffersIcon = "${iconPath}saved_offer_icon.png";

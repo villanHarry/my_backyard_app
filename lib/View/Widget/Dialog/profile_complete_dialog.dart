@@ -53,6 +53,7 @@ class _ProfileCompleteDialogState extends State<ProfileCompleteDialog> {
                   GestureDetector(
                     onTap: () {
                       AppNavigation.navigatorPop();
+                      widget.onYes(c);
                     },
                     child: Image.asset(
                       ImagePath.close,

@@ -119,7 +119,9 @@ class CustomDropDown2 extends StatelessWidget {
             border: Border.all(width: 2, color: Colors.transparent),
             color: MyColors().whiteColor,
           ),
+          
         ),
+        
       ),
     );
   }
@@ -133,7 +135,7 @@ class CustomDropDown2 extends StatelessWidget {
 
   OutlineInputBorder _outlineInputBorder() {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(
           width: 1,
           style: showBorder == true ? BorderStyle.solid : BorderStyle.none,

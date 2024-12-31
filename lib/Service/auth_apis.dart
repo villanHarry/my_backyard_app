@@ -1,6 +1,5 @@
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:backyard/Component/custom_toast.dart';
 import 'package:backyard/Controller/user_controller.dart';
 import 'package:backyard/Model/response_model.dart';
@@ -12,26 +11,115 @@ import 'package:backyard/Utils/app_router_name.dart';
 import 'package:backyard/Utils/enum.dart';
 import 'package:backyard/Utils/local_shared_preferences.dart';
 import 'package:backyard/main.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class AuthAPIS {
-  static Future<bool> signIn({required String email}) async {
+  static Future<bool> signIn(
+      {required String email, required String password}) async {
     try {
       // final devicetoken = await FirebaseMessaging.instance.getToken();
-      final type =
-          navigatorKey.currentContext?.read<UserController>().user?.role;
+      // final type =
+      //     navigatorKey.currentContext?.read<UserController>().user?.role;
       http.Response? res = await AppNetwork.networkRequest(
           requestTypes.POST.name, API.SIGN_IN_ENDPOINT,
           parameters: {
             'email': email,
-            "role": type?.name ?? "",
+            'password': password,
+            // "role": type?.name ?? "",
             "devicetoken": "fjhgjhgjh", //devicetoken ?? "",
             "devicetype": Platform.isAndroid ? "android" : "ios",
           });
+      if (res != null) {
+        final model = responseModelFromJson(res.body);
+        if (model.status == 1) {
+          navigatorKey.currentContext
+              ?.read<UserController>()
+              .setUser(User.setUser2(model.data?["user"]));
+          if (model.data?["user"]["is_profile_completed"] == 1 &&
+              model.data?["user"]["is_verified"] == 1) {
+            SharedPreference localDatabase = SharedPreference();
+            await localDatabase.sharedPreference;
+            localDatabase.clear();
+            localDatabase.setUser(user: model.data?["user"]);
+          }
+          return true;
+        } else {
+          CustomToast().showToast(message: model.message ?? "");
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> signInWithId({required String id}) async {
+    try {
+      http.Response? res = await AppNetwork.networkRequest(
+        requestTypes.GET.name,
+        "${API.SIGN_IN_WITH_ID_ENDPOINT}?user_id=$id",
+      );
+      if (res != null) {
+        final model = responseModelFromJson(res.body);
+        if (model.status == 1) {
+          navigatorKey.currentContext
+              ?.read<UserController>()
+              .setUser(User.setUser2(model.data?["user"]));
+          if (model.data?["user"]["is_profile_completed"] == 1 &&
+              model.data?["user"]["is_verified"] == 1) {
+            SharedPreference localDatabase = SharedPreference();
+            await localDatabase.sharedPreference;
+            localDatabase.clear();
+            localDatabase.setUser(user: model.data?["user"]);
+          }
+          return true;
+        } else {
+          CustomToast().showToast(message: model.message ?? "");
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> forgotPassword({required String email}) async {
+    try {
+      http.Response? res = await AppNetwork.networkRequest(
+          requestTypes.POST.name, API.FORGOT_PASSWORD_ENDPOINT,
+          parameters: {'email': email});
+      if (res != null) {
+        final model = responseModelFromJson(res.body);
+        if (model.status == 1) {
+          navigatorKey.currentContext
+              ?.read<UserController>()
+              .setUser(User.setUser(model.data?["user"]));
+          return true;
+        } else {
+          CustomToast().showToast(message: model.message ?? "");
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> changePassword(
+      {required int id, required String password}) async {
+    try {
+      http.Response? res = await AppNetwork.networkRequest(
+          requestTypes.POST.name, API.CHANGE_PASSWORD_ENDPOINT,
+          parameters: {'id': id.toString(), 'password': password});
       if (res != null) {
         final model = responseModelFromJson(res.body);
         if (model.status == 1) {
@@ -72,6 +160,7 @@ class AuthAPIS {
           if (model.data?["user"]["is_profile_completed"] == 1) {
             SharedPreference localDatabase = SharedPreference();
             await localDatabase.sharedPreference;
+            localDatabase.clear();
             localDatabase.setUser(user: model.data?["user"]);
           }
           return true;
@@ -95,19 +184,27 @@ class AuthAPIS {
       String? email,
       String? phone,
       String? description,
+      String? subId,
       double? lat,
       double? long,
+      String? role,
       int? categoryId,
       List<BussinessScheduling>? days,
       File? image}) async {
     try {
       Map<String, String> parameters = {};
       List<http.MultipartFile> attachments = [];
+      if (role != null) {
+        parameters.addAll({'role': role});
+      }
       if (firstName != null) {
         parameters.addAll({'name': firstName});
       }
       if (lastName != null) {
         parameters.addAll({'last_name': lastName});
+      }
+      if (subId != null) {
+        parameters.addAll({'sub_id': subId});
       }
       if (categoryId != null) {
         parameters.addAll({'category_id': categoryId.toString()});
@@ -115,13 +212,15 @@ class AuthAPIS {
       if (days != null) {
         final formatter = NumberFormat('00');
         for (int i = 0; i < days.length; i++) {
-          parameters.addAll({
-            'days[$i][day]': days[i].day ?? "",
-            'days[$i][start_time]':
-                '${formatter.format(_get24hour(days[i].startTime ?? "").hour)}:${formatter.format(_get24hour(days[i].startTime ?? "").minute)}',
-            'days[$i][end_time]':
-                '${formatter.format(_get24hour(days[i].endTime ?? "").hour)}:${formatter.format(_get24hour(days[i].endTime ?? "").minute)}'
-          });
+          if (days[i].startTime != null) {
+            parameters.addAll({
+              'days[$i][day]': days[i].day ?? "",
+              'days[$i][start_time]':
+                  '${formatter.format(_get24hour(days[i].startTime ?? "").hour)}:${formatter.format(_get24hour(days[i].startTime ?? "").minute)}',
+              'days[$i][end_time]':
+                  '${formatter.format(_get24hour(days[i].endTime ?? "").hour)}:${formatter.format(_get24hour(days[i].endTime ?? "").minute)}'
+            });
+          }
         }
       }
       if (email != null) {
@@ -166,6 +265,7 @@ class AuthAPIS {
               .setUser(User.setUser(model.data?["user"]), isNotToken: true);
           SharedPreference localDatabase = SharedPreference();
           await localDatabase.sharedPreference;
+          localDatabase.clear();
           localDatabase.setUser(
             user: model.data?["user"],
             token:
@@ -186,9 +286,7 @@ class AuthAPIS {
   static TimeOfDay _get24hour(String val) {
     int hour = int.parse(val.split(":").first);
     int minute = int.parse(val.split(":").last.split(" ").first);
-    if (val.contains("PM")) {
-      hour += 12;
-    }
+
     return TimeOfDay(hour: hour, minute: minute);
   }
 
@@ -286,6 +384,7 @@ class AuthAPIS {
             if ((model.data["isDeleted"] ?? 0) == 0) {
               SharedPreference localDatabase = SharedPreference();
               await localDatabase.sharedPreference;
+              localDatabase.clear();
               localDatabase.setUser(user: model.data?["user"]);
             }
             return true;

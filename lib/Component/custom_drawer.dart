@@ -266,10 +266,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
           navigatorKey.currentContext?.read<HomeController>().jumpTo(i: 0);
         }),
     MenuModel(
+        name: 'Scan QR',
+        image: ImagePath.scan,
+        onTap: () {
+          AppNavigation.navigateTo(AppRouteName.SCAN_QR_ROUTE);
+        }),
+    MenuModel(
         name: 'Settings',
         image: ImagePath.setting,
         onTap: () {
-          navigatorKey.currentContext?.read<HomeController>().jumpTo(i: 3);
+          navigatorKey.currentContext?.read<HomeController>().jumpTo(i: 2);
         }),
     MenuModel(
         name: 'Terms & Conditions',
@@ -300,12 +306,12 @@ class _CustomDrawerState extends State<CustomDrawer> {
         onTap: () {
           navigatorKey.currentContext?.read<HomeController>().jumpTo(i: 0);
         }),
-    MenuModel(
-        name: 'Favorites',
-        image: ImagePath.favorite,
-        onTap: () {
-          AppNavigation.navigateTo(AppRouteName.FAVORITE_ROUTE);
-        }),
+    // MenuModel(
+    //     name: 'Favorites',
+    //     image: ImagePath.favorite,
+    //     onTap: () {
+    //       AppNavigation.navigateTo(AppRouteName.FAVORITE_ROUTE);
+    //     }),
     // MenuModel(name: 'Loyalty',image: ImagePath.loyalty,onTap: (context){AppNavigation.navigateTo( AppRouteName.LOYALTY_ROUTE);}),
     MenuModel(
         name: 'Settings',
@@ -356,6 +362,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
   }
 
   bool business =
-      navigatorKey.currentContext?.read<UserController>().user?.role ==
-          Role.Business;
+      (navigatorKey.currentContext?.read<UserController>().isSwitch ?? false)
+          ? false
+          : navigatorKey.currentContext?.read<UserController>().user?.role ==
+              Role.Business;
 }

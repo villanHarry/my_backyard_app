@@ -5,11 +5,13 @@ import 'package:backyard/Component/custom_buttom.dart';
 import 'package:backyard/Component/custom_text.dart';
 import 'package:backyard/Service/navigation_service.dart';
 import 'package:backyard/Utils/my_colors.dart';
+import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 
 class OfferAvailedDialog extends StatelessWidget {
-  OfferAvailedDialog({required this.onYes});
+  OfferAvailedDialog({required this.onYes, this.title});
   Function onYes;
+  String? title;
   @override
   Widget build(BuildContext c) {
     return Container(
@@ -81,19 +83,25 @@ class OfferAvailedDialog extends StatelessWidget {
                   SizedBox(
                     height: 2.h,
                   ),
-                  textDetail(title: 'Offer', description: 'Title'),
+                  textDetail(title: 'Offer', description: title ?? ""),
                   SizedBox(
                     height: 1.h,
                   ),
-                  textDetail(title: 'Date', description: '22 January 2021'),
+                  textDetail(
+                      title: 'Date',
+                      description:
+                          DateFormat("dd MMMM yyyy").format(DateTime.now())),
                   SizedBox(
                     height: 1.h,
                   ),
-                  textDetail(title: 'Time', description: '02 : 35 : 45 PM'),
-                  SizedBox(
-                    height: 1.h,
-                  ),
-                  textDetail(title: 'Coins rewards', description: '+50'),
+                  textDetail(
+                      title: 'Time',
+                      description:
+                          DateFormat("hh : mm aa").format(DateTime.now())),
+                  // SizedBox(
+                  //   height: 1.h,
+                  // ),
+                  // textDetail(title: 'Coins rewards', description: '+50'),
                   SizedBox(
                     height: 2.h,
                   ),

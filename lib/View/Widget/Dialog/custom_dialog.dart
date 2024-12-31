@@ -14,10 +14,12 @@ class CustomDialog extends StatelessWidget {
       this.button2,
       this.description,
       this.image,
+      this.child,
       this.b1,
       this.b2});
   Function onYes;
   Function? button2;
+  Widget? child;
   String? title, description, image, b1, b2;
   @override
   Widget build(BuildContext c) {
@@ -75,6 +77,7 @@ class CustomDialog extends StatelessWidget {
                   SizedBox(
                     height: 2.h,
                   ),
+                  if (child != null) child ?? const SizedBox.shrink(),
                   if (image != null)
                     Image.asset(
                       image ?? ImagePath.like,

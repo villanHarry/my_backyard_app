@@ -3,12 +3,15 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:backyard/Arguments/screen_arguments.dart';
 import 'package:backyard/Component/custom_switch.dart';
+import 'package:backyard/Component/custom_toast.dart';
 import 'package:backyard/Component/validations.dart';
+import 'package:backyard/Controller/home_controller.dart';
 import 'package:backyard/Controller/user_controller.dart';
-import 'package:backyard/Model/user_model.dart';
+import 'package:backyard/Model/places_model.dart';
 import 'package:backyard/Service/api.dart';
 import 'package:backyard/Service/app_network.dart';
 import 'package:backyard/Service/auth_apis.dart';
+import 'package:backyard/Service/general_apis.dart';
 import 'package:backyard/Utils/enum.dart';
 import 'package:backyard/main.dart';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
@@ -41,13 +44,13 @@ class ProfileSetup extends StatefulWidget {
 }
 
 class _ProfileSetupState extends State<ProfileSetup> {
-  late final business =
-      context.read<UserController>().user?.role == Role.Business;
-  File imageProfile = File("");
+  late Role? role = context.read<UserController>().user?.role;
+  late bool business = role == Role.Business;
+  String? imageProfile;
   bool isMerchantSetupActive = false;
   TextEditingController firstName = TextEditingController();
   final _form = GlobalKey<FormState>();
-  String title = '';
+  String title = 'Complete Profile';
   String buttonTitle = 'Continue';
   TextEditingController lastName = TextEditingController();
   TextEditingController emailC = TextEditingController();
@@ -61,6 +64,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
   double lat = 0, lng = 0;
   bool emailReadOnly = false, phoneReadOnly = false;
   String? merchantUrl;
+  imageType type = imageType.asset;
   late final userController = context.read<UserController>();
   late final userController2 = context.watch<UserController>();
 
@@ -69,15 +73,32 @@ class _ProfileSetupState extends State<ProfileSetup> {
   final CountDownController _countDownController = CountDownController();
   bool isTimeComplete = false;
 
+  Map<Role, String> descriptions = {
+    Role.User: "Consumer Interface",
+    Role.Business: "Business + Consumer Interface"
+  };
+
   @override
   void initState() {
-    // TODO: implement initState
-    super.initState();
     firstName.text = userController.user?.name ?? "";
     lastName.text = userController.user?.lastName ?? "";
     emailC.text = userController.user?.email ?? "";
-    phone.text = userController.user?.phone ?? "";
-    if (widget.editProfile) {}
+
+    if (widget.editProfile) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+        await GeneralAPIS.getPlaces();
+      });
+      phone.text = userController.user?.phone ?? "";
+      location.text = userController.user?.address ?? "";
+      lat = userController.user?.latitude ?? 0;
+      lng = userController.user?.longitude ?? 0;
+      description.text = userController.user?.description ?? "";
+      imageProfile = userController.user?.profileImage ?? "";
+      title = 'Edit Profile';
+      type = imageType.network;
+    }
+    // TODO: implement initState
+    super.initState();
   }
 
   @override
@@ -132,9 +153,10 @@ class _ProfileSetupState extends State<ProfileSetup> {
                               context: context,
                               onMediaChanged: (val) {
                                 if (val != null) {
-                                  imageProfile = File(val);
+                                  imageProfile = val;
+                                  type = imageType.file;
                                   setState(() {
-                                    errorText = imageProfile.path.isEmpty;
+                                    errorText = (imageProfile ?? "").isEmpty;
                                   });
                                 }
                               });
@@ -144,21 +166,13 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           backgroundColor: MyColors().primaryColor,
                           child: CircleAvatar(
                               radius: 65.0,
-                              backgroundImage: (imageProfile.path == ""
-                                  ? (context
-                                                  .read<UserController>()
-                                                  .user
-                                                  ?.profileImage ??
-                                              "")
-                                          .isNotEmpty
-                                      ? NetworkImage(API.public_url +
-                                          (context
-                                                  .read<UserController>()
-                                                  .user
-                                                  ?.profileImage ??
-                                              ""))
-                                      : const AssetImage(ImagePath.noUserImage)
-                                  : FileImage(imageProfile)) as ImageProvider,
+                              backgroundImage: (type == imageType.network
+                                  ? NetworkImage(
+                                      "${API.public_url}${imageProfile ?? ""}")
+                                  : type == imageType.file
+                                      ? FileImage(File(imageProfile ?? ""))
+                                      : const AssetImage(ImagePath
+                                          .noUserImage)) as ImageProvider,
                               child: Align(
                                 alignment: Alignment.bottomRight,
                                 child: CircleAvatar(
@@ -176,10 +190,12 @@ class _ProfileSetupState extends State<ProfileSetup> {
                                                 context: context,
                                                 onMediaChanged: (val) {
                                                   if (val != null) {
-                                                    imageProfile = File(val);
+                                                    imageProfile = val;
+                                                    type = imageType.file;
                                                     setState(() {
-                                                      errorText = imageProfile
-                                                          .path.isEmpty;
+                                                      errorText =
+                                                          (imageProfile ?? "")
+                                                              .isEmpty;
                                                     });
                                                   }
                                                 });
@@ -208,6 +224,86 @@ class _ProfileSetupState extends State<ProfileSetup> {
                         ),
                       ),
                     ),
+                  SizedBox(height: 3.h),
+                  if (!widget.editProfile) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: MyText(
+                          title: "Role Selection:",
+                          center: true,
+                          line: 2,
+                          size: 18,
+                          toverflow: TextOverflow.ellipsis,
+                          fontWeight: FontWeight.w600,
+                          clr: MyColors().black),
+                    ),
+                    SizedBox(height: 1.8.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        for (int i = 0; i < Role.values.length; i++)
+                          GestureDetector(
+                            onTap: () {
+                              role = Role.values[i];
+                              userController.setRole(Role.values[i]);
+                              business = role == Role.Business;
+                              setState(() {});
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 18,
+                                  height: 18,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          (role ?? Role.User) == Role.values[i]
+                                              ? Colors.black
+                                              : null,
+                                      border: Border.all(
+                                          width: 2,
+                                          color: (role ?? Role.User) ==
+                                                  Role.values[i]
+                                              ? Colors.transparent
+                                              : Colors.black)),
+                                  child: (role ?? Role.User) == Role.values[i]
+                                      ? Icon(Icons.check,
+                                          size: 14,
+                                          color: widget.editProfile
+                                              ? Colors.white
+                                              : MyColors().primaryColor)
+                                      : null,
+                                ),
+                                SizedBox(width: 1.5.w),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      Role.values[i].name,
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black),
+                                    ),
+                                    Text(
+                                      descriptions[Role.values[i]] ?? "",
+                                      style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w300,
+                                          fontStyle: FontStyle.italic,
+                                          color: Colors.black),
+                                    )
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )
+                      ],
+                    )
+                  ],
                   SizedBox(height: 3.h),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,39 +369,40 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           height: 1.5.h,
                         ),
                       ],
-                      MyTextField(
-                        prefixWidget: Image.asset(ImagePath.phone,
-                            scale: 2,
-                            color: widget.editProfile
-                                ? MyColors().primaryColor
-                                : MyColors().primaryColor),
-                        controller: phone,
-                        hintText: 'Phone Number',
-                        inputType: TextInputType.phone,
-                        contact: true,
-                        readOnly: widget.editProfile
-                            ? (userController2.user?.socialType == "phone")
-                            : (userController2.user?.phone ?? "").isNotEmpty,
-                        backgroundColor:
-                            !widget.editProfile ? null : MyColors().container,
-                        validation: (value) {
-                          final cleanedPhoneNumber = value
-                              .toString()
-                              .replaceAll(RegExp(r'[()-\s]'),
-                                  ''); // Remove brackets, dashes, and spaces
-                          log(cleanedPhoneNumber);
+                      if (business)
+                        MyTextField(
+                          prefixWidget: Image.asset(ImagePath.phone,
+                              scale: 2,
+                              color: widget.editProfile
+                                  ? MyColors().primaryColor
+                                  : MyColors().primaryColor),
+                          controller: phone,
+                          hintText: 'Phone Number',
+                          inputType: TextInputType.phone,
+                          contact: true,
+                          readOnly: widget.editProfile
+                              ? (userController2.user?.socialType == "phone")
+                              : (userController2.user?.phone ?? "").isNotEmpty,
+                          backgroundColor:
+                              !widget.editProfile ? null : MyColors().container,
+                          validation: (value) {
+                            final cleanedPhoneNumber = value
+                                .toString()
+                                .replaceAll(RegExp(r'[()-\s]'),
+                                    ''); // Remove brackets, dashes, and spaces
+                            log(cleanedPhoneNumber);
 
-                          if (cleanedPhoneNumber == null ||
-                              !isNumeric(cleanedPhoneNumber)) {
-                            return "Phone number field can\"t be empty";
-                          }
-                          if (cleanedPhoneNumber.length < 10) {
-                            return "Invalid Phone Number";
-                          }
+                            if (cleanedPhoneNumber == null ||
+                                !isNumeric(cleanedPhoneNumber)) {
+                              return "Phone number field can\"t be empty";
+                            }
+                            if (cleanedPhoneNumber.length < 10) {
+                              return "Invalid Phone Number";
+                            }
 
-                          return null;
-                        },
-                      ),
+                            return null;
+                          },
+                        ),
                       SizedBox(
                         height: 1.5.h,
                       ),
@@ -357,7 +454,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           maxLines: 5,
                           minLines: 5,
                           controller: description,
-                          borderRadius: 25,
+                          borderRadius: 10,
                           maxLength: 275,
                           backgroundColor:
                               !widget.editProfile ? null : MyColors().container,
@@ -403,19 +500,24 @@ class _ProfileSetupState extends State<ProfileSetup> {
 
   Future<void> getAddress(context) async {
     LocationResult t = await Utils().showPlacePicker(context);
-    print(t.formattedAddress.toString());
-    lat = t.latLng?.latitude ?? 0;
-    lng = t.latLng?.longitude ?? 0;
-    location.text = t.formattedAddress ?? '';
+    if (isLatLongInCities(t.latLng ?? const LatLng(0, 0))) {
+      print(t.formattedAddress.toString());
+      lat = t.latLng?.latitude ?? 0;
+      lng = t.latLng?.longitude ?? 0;
+      location.text = t.formattedAddress ?? '';
+    } else {
+      CustomToast().showToast(
+          message:
+              "Application is not available in this address, it'll be available soon");
+    }
   }
 
   onSubmit() async {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
-      errorText = imageProfile.path.isEmpty;
+      errorText = (imageProfile ?? "").isEmpty;
     });
     if ((_form.currentState?.validate() ?? false) && !(errorText)) {
-      final role = context.read<UserController>().user?.role;
       if (widget.editProfile) {
         AppNetwork.loadingProgressIndicator();
         await AuthAPIS.completeProfile(
@@ -425,10 +527,22 @@ class _ProfileSetupState extends State<ProfileSetup> {
                 role == Role.Business ? userController.user?.categoryId : null,
             description: role == Role.Business ? description.text : null,
             isPushNotify: "1",
+            email: emailC.text != userController.user?.email &&
+                    emailC.text.isNotEmpty
+                ? emailC.text
+                : null,
+            phone: phone.text != (userController.user?.phone ?? "")
+                ? phone.text
+                : null,
+            days: userController.user?.days,
             address: role == Role.Business ? location.text : null,
             lat: role == Role.Business ? lat : null,
             long: role == Role.Business ? lng : null,
-            image: imageProfile);
+            image: imageProfile == null
+                ? null
+                : type == imageType.file
+                    ? File(imageProfile ?? "")
+                    : null);
         AppNavigation.navigatorPop();
         AppNavigation.navigatorPop();
       } else {
@@ -442,9 +556,11 @@ class _ProfileSetupState extends State<ProfileSetup> {
                       emailC.text.isNotEmpty
                   ? emailC.text
                   : null,
-              phone:
-                  phone.text != userController.user?.phone ? phone.text : null,
-              image: imageProfile);
+              role: Role.User.name,
+              // phone: phone.text != (userController.user?.phone ?? "")
+              //     ? phone.text
+              //     : null,
+              image: imageProfile == null ? null : File(imageProfile ?? ""));
           AppNavigation.navigatorPop();
           if (value) {
             completeDialog(onTap: () {
@@ -477,7 +593,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
             "lng": lng,
             "email": emailC.text,
             "phone": phone.text,
-            "image": imageProfile.path,
+            "image": imageProfile ?? "",
           };
           AppNavigation.navigateTo(AppRouteName.SCHEDULE_SCREEN_ROUTE,
               arguments: ScreenArguments(args: arguments, fromEdit: false));
@@ -512,4 +628,73 @@ class _ProfileSetupState extends State<ProfileSetup> {
           );
         });
   }
+}
+
+bool isLatLongInCities(LatLng selectedLatLng) {
+  // Define bounding boxes for all cities
+  // final cityBounds = {
+  //   "Tonawanda": [const LatLng(43.070, -78.950), const LatLng(43.005, -78.800)],
+  //   "Houston": [const LatLng(30.110, -95.850), const LatLng(29.520, -95.080)],
+  //   "Cypress": [const LatLng(30.010, -96.200), const LatLng(29.930, -95.550)],
+  //   "Katy": [const LatLng(29.900, -95.900), const LatLng(29.680, -95.610)],
+  //   "Spring": [const LatLng(30.130, -95.570), const LatLng(30.000, -95.300)],
+  //   "The Woodlands": [
+  //     const LatLng(30.240, -95.600),
+  //     const LatLng(30.120, -95.450)
+  //   ],
+  //   "Tomball": [const LatLng(30.120, -95.680), const LatLng(30.070, -95.560)],
+  //   "Conroe": [const LatLng(30.360, -95.570), const LatLng(30.260, -95.400)],
+  //   "Richmond": [const LatLng(29.620, -95.830), const LatLng(29.520, -95.730)],
+  //   "Sugar Land": [
+  //     const LatLng(29.650, -95.700),
+  //     const LatLng(29.520, -95.550)
+  //   ],
+  //   "Rosenberg": [const LatLng(29.600, -95.850), const LatLng(29.500, -95.750)],
+  //   "Magnolia": [const LatLng(30.220, -95.770), const LatLng(30.150, -95.650)],
+  //   "Willis": [const LatLng(30.450, -95.520), const LatLng(30.380, -95.420)],
+  //   "Jersey Village": [
+  //     const LatLng(29.910, -95.590),
+  //     const LatLng(29.870, -95.550)
+  //   ],
+  //   "Heights": [const LatLng(29.800, -95.410), const LatLng(29.750, -95.380)],
+  //   "Kenmore": [const LatLng(42.970, -78.890), const LatLng(42.960, -78.870)],
+  //   "Buffalo": [const LatLng(42.960, -78.950), const LatLng(42.830, -78.770)],
+  //   "Amherst": [const LatLng(43.050, -78.820), const LatLng(42.960, -78.730)],
+  //   "Williamsville": [
+  //     const LatLng(42.970, -78.750),
+  //     const LatLng(42.940, -78.720)
+  //   ],
+  //   "Clarence": [const LatLng(43.020, -78.650), const LatLng(42.960, -78.570)],
+  //   "Niagara Falls": [
+  //     const LatLng(43.120, -79.070),
+  //     const LatLng(43.010, -78.900)
+  //   ],
+  //   "Lewiston": [const LatLng(43.190, -79.070), const LatLng(43.140, -78.940)],
+  //   "North Tonawanda": [
+  //     const LatLng(43.060, -78.890),
+  //     const LatLng(43.030, -78.830)
+  //   ],
+  //   "Orchard Park": [
+  //     const LatLng(42.800, -78.780),
+  //     const LatLng(42.720, -78.650)
+  //   ],
+  //   "Hamburg": [const LatLng(42.770, -78.930), const LatLng(42.710, -78.820)],
+  // };
+  final controller = navigatorKey.currentContext!.read<HomeController>();
+  // Check if the selectedLatLng is within any city's bounding box
+  for (PlacesModel bounds in (controller.places ?? [])) {
+    LatLng topLeft =
+        LatLng(bounds.topLeftLatitude ?? 0, bounds.topLeftLongitude ?? 0);
+    LatLng bottomRight = LatLng(
+        bounds.bottomRightLatitude ?? 0, bounds.bottomRightLongitude ?? 0);
+
+    if (selectedLatLng.latitude <= topLeft.latitude &&
+        selectedLatLng.latitude >= bottomRight.latitude &&
+        selectedLatLng.longitude >= topLeft.longitude &&
+        selectedLatLng.longitude <= bottomRight.longitude) {
+      return true;
+    }
+  }
+
+  return false;
 }

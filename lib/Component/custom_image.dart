@@ -17,12 +17,14 @@ class CustomImage extends StatelessWidget {
       this.borderRadius,
       this.isProfile,
       this.width,
+      this.border,
       this.radius,
       this.photoView = true});
   String? url;
   BoxFit? fit;
   BoxShape? shape;
   bool? isProfile;
+  bool? border;
   double? width, height, radius;
   BorderRadius? borderRadius;
   bool photoView = true;
@@ -74,7 +76,10 @@ class CustomImage extends StatelessWidget {
       height: height ?? 30.w,
       fit: fit ?? BoxFit.cover,
       cache: true,
-      // border: Border.all(color: Colors.red, width: 1.0),
+
+      border: (border ?? false)
+          ? Border.all(color: MyColors().primaryColor, width: 2)
+          : null,
       shape: shape ?? BoxShape.rectangle,
       borderRadius:
           borderRadius ?? BorderRadius.all(Radius.circular(radius ?? 0)),

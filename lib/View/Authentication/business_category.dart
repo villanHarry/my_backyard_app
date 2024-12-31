@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:backyard/Arguments/screen_arguments.dart';
 import 'package:backyard/Component/custom_buttom.dart';
 import 'package:backyard/Component/custom_image.dart';
@@ -7,12 +10,16 @@ import 'package:backyard/Component/custom_toast.dart';
 import 'package:backyard/Controller/home_controller.dart';
 import 'package:backyard/Controller/user_controller.dart';
 import 'package:backyard/Model/menu_model.dart';
+import 'package:backyard/Service/app_network.dart';
+import 'package:backyard/Service/auth_apis.dart';
 import 'package:backyard/Service/general_apis.dart';
 import 'package:backyard/Service/navigation_service.dart';
 import 'package:backyard/Utils/app_router_name.dart';
+import 'package:backyard/Utils/enum.dart';
 import 'package:backyard/Utils/image_path.dart';
 import 'package:backyard/Utils/my_colors.dart';
 import 'package:backyard/View/Common/subscription.dart';
+import 'package:backyard/View/Widget/Dialog/profile_complete_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:backyard/Component/custom_padding.dart';
 import 'package:backyard/View/base_view.dart';
@@ -191,18 +198,65 @@ class _CategoryState extends State<Category> {
         ));
   }
 
-  onSubmit(HomeController val) {
+  onSubmit(HomeController val) async {
     if (
         // i == 999
         selected.isEmpty) {
       CustomToast().showToast(message: 'Select category first');
     } else {
-      context
-          .read<UserController>()
-          .setCategory(val.categories?[selected.first].id);
-      AppNavigation.navigateTo(AppRouteName.SUBSCRIPTION_SCREEN_ROUTE,
-          arguments: ScreenArguments(fromCompleteProfile: true));
+      final userController = context.read<UserController>();
+      userController.setCategory(val.categories?[selected.first].id);
+      final user = userController.user;
+      AppNetwork.loadingProgressIndicator();
+      final result = await AuthAPIS.completeProfile(
+        firstName: user?.name,
+        lastName: user?.lastName,
+        description: user?.description,
+        address: user?.address,
+        lat: user?.latitude,
+        long: user?.longitude,
+        email: user?.email,
+        categoryId: user?.categoryId,
+        role: Role.Business.name,
+        phone: user?.phone,
+        days: user?.days,
+        image: File(user?.profileImage ?? ""),
+      );
+      AppNavigation.navigatorPop();
+      if (result) {
+        completeDialog(onTap: () {
+          AppNavigation.navigateToRemovingAll(AppRouteName.HOME_SCREEN_ROUTE);
+        });
+      }
+      // AppNavigation.navigateTo(AppRouteName.SUBSCRIPTION_SCREEN_ROUTE,
+      //     arguments: ScreenArguments(fromCompleteProfile: true));
       // AppNavigation.navigateToRemovingAll(context, AppRouteName.HOME_SCREEN_ROUTE,);
     }
+  }
+
+  completeDialog({required Function onTap}) {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return WillPopScope(
+            onWillPop: () async {
+              return false;
+            },
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: AlertDialog(
+                backgroundColor: Colors.transparent,
+                contentPadding: const EdgeInsets.all(0),
+                insetPadding: EdgeInsets.symmetric(horizontal: 4.w),
+                content: ProfileCompleteDialog(
+                  onYes: (v) {
+                    onTap();
+                  },
+                ),
+              ),
+            ),
+          );
+        });
   }
 }

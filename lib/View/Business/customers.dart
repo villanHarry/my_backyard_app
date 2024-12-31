@@ -1,14 +1,19 @@
 import 'dart:ui';
 import 'package:backyard/Arguments/profile_screen_arguments.dart';
 import 'package:backyard/Component/Appbar/appbar_components.dart';
+import 'package:backyard/Component/custom_empty_data.dart';
+import 'package:backyard/Component/custom_image.dart';
 import 'package:backyard/Component/custom_padding.dart';
 import 'package:backyard/Component/custom_refresh.dart';
 import 'package:backyard/Component/custom_text.dart';
 import 'package:backyard/Controller/home_controller.dart';
+import 'package:backyard/Model/user_model.dart';
+import 'package:backyard/Service/bus_apis.dart';
 import 'package:backyard/Utils/app_router_name.dart';
 import 'package:backyard/Utils/my_colors.dart';
 import 'package:backyard/View/Widget/Dialog/reject_dialog.dart';
 import 'package:backyard/View/Widget/search_tile.dart';
+import 'package:backyard/main.dart';
 import 'package:flutter/material.dart';
 import 'package:backyard/View/base_view.dart';
 import 'package:provider/provider.dart';
@@ -25,13 +30,25 @@ class Customers extends StatefulWidget {
 
 class _CustomersState extends State<Customers> {
   TextEditingController s = TextEditingController();
+  final homeController = navigatorKey.currentContext?.read<HomeController>();
   bool searchOn = false;
 
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      setLoading(true);
+      await getCustomers();
+      setLoading(false);
+    });
     // TODO: implement initState
     super.initState();
   }
+
+  void setLoading(bool val) {
+    homeController?.setLoading(val);
+  }
+
+  Future<void> getCustomers() => BusAPIS.getCustomers();
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +62,7 @@ class _CustomersState extends State<Customers> {
         bottomSafeArea: false,
         topSafeArea: false,
         child: CustomRefresh(
-          onRefresh: () async {},
+          onRefresh: () => getCustomers(),
           child: Consumer<HomeController>(builder: (context, val, _) {
             return CustomPadding(
               topPadding: 0.h,
@@ -79,6 +96,7 @@ class _CustomersState extends State<Customers> {
                           bottom: 2.h,
                         ),
                         SearchTile(
+                          disabled: val.loading,
                           showFilter: false,
                           // search: location,
                           onTap: () async {
@@ -97,19 +115,60 @@ class _CustomersState extends State<Customers> {
                   SizedBox(
                     height: 2.h,
                   ),
-                  Expanded(
-                      child: ListView.builder(
-                          // itemCount:s.length,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 3.w, vertical: 0.h),
-                          physics: AlwaysScrollableScrollPhysics(
-                              parent: const ClampingScrollPhysics()),
-                          shrinkWrap: true,
-                          itemBuilder: (_, i) => CustomerTile(
-                                position: (i + 1) >= 1 && (i + 1) <= 3
-                                    ? (i + 1)
-                                    : null,
-                              ))),
+                  // Expanded(
+                  //     child: ListView.builder(
+                  //         itemCount: 0,
+                  //         //s.length,
+                  //         padding: EdgeInsets.symmetric(
+                  //             horizontal: 3.w, vertical: 0.h),
+                  //         physics: AlwaysScrollableScrollPhysics(
+                  //             parent: const ClampingScrollPhysics()),
+                  //         shrinkWrap: true,
+                  //         itemBuilder: (_, i) => CustomerTile(
+                  //               position: (i + 1) >= 1 && (i + 1) <= 3
+                  //                   ? (i + 1)
+                  //                   : null,
+                  //             ))),
+                  val.loading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                              color: MyColors().primaryColor),
+                        )
+                      : Expanded(
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: (val.customersList.isEmpty)
+                                ? Column(
+                                    children: [
+                                      SizedBox(height: 20.h),
+                                      Center(
+                                        child: CustomEmptyData(
+                                          title: 'No Customers Found',
+                                          hasLoader: false,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : ListView(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 3.w, vertical: 0.h),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    children: [
+                                      for (int i = 0;
+                                          i < val.customersList.length;
+                                          i++)
+                                        CustomerTile(
+                                          model: val.customersList[i],
+                                          position: (i + 1) >= 1 && (i + 1) <= 3
+                                              ? (i + 1)
+                                              : null,
+                                        )
+                                    ],
+                                  ),
+                          ),
+                        )
                 ],
               ),
             );
@@ -142,15 +201,16 @@ class _CustomersState extends State<Customers> {
 }
 
 class CustomerTile extends StatelessWidget {
-  const CustomerTile({super.key, this.position});
+  const CustomerTile({super.key, this.position, this.model});
   final int? position;
+  final User? model;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         AppNavigation.navigateTo(AppRouteName.CustomerProfile,
-            arguments: ProfileScreenArguments(isMe: false));
+            arguments: ProfileScreenArguments(isMe: false, user: model));
       },
       child: Stack(
         children: [
@@ -171,17 +231,25 @@ class CustomerTile extends StatelessWidget {
             margin: EdgeInsets.only(bottom: 1.5.h),
             child: Row(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border:
-                          Border.all(color: MyColors().primaryColor, width: 2)),
-                  child: Image.asset(
-                    ImagePath.random7,
-                    scale: 3.2,
+                // Container(
+                //   decoration: BoxDecoration(
+                //       shape: BoxShape.circle,
+                //       border:
+                //           Border.all(color: MyColors().primaryColor, width: 2)),
+                //   child: Image.asset(
+                //     ImagePath.random7,
+                //     scale: 3.2,
+                //     fit: BoxFit.cover,
+                //   ),
+                // ),
+                CustomImage(
+                    height: 40,
+                    width: 40,
+                    border: true,
+                    shape: BoxShape.circle,
                     fit: BoxFit.cover,
-                  ),
-                ),
+                    borderRadius: BorderRadius.circular(10),
+                    url: model?.profileImage ?? ""),
                 SizedBox(
                   width: 2.w,
                 ),
@@ -189,10 +257,14 @@ class CustomerTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const MyText(
-                          title: 'Lisa Maria',
-                          fontWeight: FontWeight.w600,
-                          size: 14),
+                      SizedBox(
+                          width: 80.w,
+                          child: MyText(
+                              title:
+                                  "${model?.name ?? ""} ${model?.lastName ?? ""}",
+                              fontWeight: FontWeight.w600,
+                              size: 14,
+                              toverflow: TextOverflow.ellipsis)),
                       SizedBox(
                         height: .15.h,
                       ),
@@ -205,7 +277,7 @@ class CustomerTile extends StatelessWidget {
                               size: 10),
                           Expanded(
                               child: MyText(
-                                  title: '25',
+                                  title: model?.offerCount.toString() ?? "0",
                                   clr: MyColors().primaryColor,
                                   fontWeight: FontWeight.bold,
                                   size: 13))

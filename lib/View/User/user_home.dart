@@ -1,42 +1,34 @@
 import 'dart:async';
-import 'dart:ui';
-
+import 'dart:developer';
+import 'dart:io';
 import 'package:backyard/Component/custom_dropdown.dart';
 import 'package:backyard/Component/custom_radio_tile.dart';
 import 'package:backyard/Model/category_model.dart';
 import 'package:backyard/Model/category_product_model.dart';
-import 'package:backyard/Service/app_network.dart';
+import 'package:backyard/Service/bus_apis.dart';
 import 'package:backyard/Service/general_apis.dart';
+import 'package:backyard/Utils/enum.dart';
 import 'package:backyard/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:place_picker/place_picker.dart';
 import 'package:backyard/Component/Appbar/appbar_components.dart';
 import 'package:backyard/Component/custom_buttom.dart';
-import 'package:backyard/Component/custom_image.dart';
 import 'package:backyard/Component/custom_textfield.dart';
 import 'package:backyard/Component/custom_toast.dart';
 import 'package:backyard/Controller/user_controller.dart';
 import 'package:backyard/Controller/home_controller.dart';
-import 'package:backyard/Model/user_model.dart';
 import 'package:backyard/Utils/app_size.dart';
 import 'package:backyard/Utils/image_path.dart';
-import 'package:backyard/Utils/loader.dart';
 import 'package:backyard/Utils/my_colors.dart';
 import 'package:backyard/Utils/utils.dart';
-import 'package:backyard/View/Widget/Dialog/payment_dialog.dart';
-import 'package:backyard/View/Widget/search_tile.dart';
 import 'package:provider/provider.dart';
 import '../../../Component/custom_bottomsheet_indicator.dart';
 import '../../../Component/custom_text.dart';
 import 'package:sizer/sizer.dart';
-
-import '../../../Service/navigation_service.dart';
-import '../../../Utils/app_router_name.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class UserHome extends StatefulWidget {
   @override
@@ -64,9 +56,51 @@ class _UserHomeState extends State<UserHome> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       setLoading(true);
-      await getCategories();
+      await Future.wait([getCategories(), getBuses()]);
       setLoading(false);
     });
+  }
+
+  Future<void> getBuses() async {
+    try {
+      final controller = navigatorKey.currentContext?.read<UserController>();
+      Position? pos;
+      if (Platform.isAndroid) {
+        Permission.location.request();
+      } else {
+        Permission.locationAlways.request();
+      }
+      pos = await Geolocator.getLastKnownPosition();
+      if (controller?.user?.role == Role.Business) {
+        await BusAPIS.getBuses(pos?.latitude, pos?.longitude);
+        // controller?.moveMap(CameraUpdate.newCameraPosition(CameraPosition(
+        //     target: LatLng(pos?.latitude ?? 0, pos?.longitude ?? 0),
+        //     zoom: 13.4746)));
+        controller?.addCircles(Circle(
+            circleId: const CircleId("myLocation"),
+            radius: (controller.mile * 1609.344),
+            strokeWidth: 1,
+            zIndex: 0,
+            center: LatLng(pos?.latitude ?? 0, pos?.longitude ?? 0),
+            fillColor: MyColors().primaryColor.withOpacity(.15),
+            strokeColor: MyColors().primaryColor));
+      } else {
+        await BusAPIS.getBuses(pos?.latitude, pos?.longitude);
+        // controller?.moveMap(CameraUpdate.newCameraPosition(CameraPosition(
+        //     target: LatLng(pos?.latitude ?? 0, pos?.longitude ?? 0),
+        //     zoom: 13.4746)));
+        controller?.addCircles(Circle(
+            circleId: const CircleId("myLocation"),
+            radius: (controller.mile * 1609.344),
+            strokeWidth: 1,
+            zIndex: 0,
+            center: LatLng(pos?.latitude ?? 0, pos?.longitude ?? 0),
+            fillColor: MyColors().primaryColor.withOpacity(.15),
+            strokeColor: MyColors().primaryColor));
+      }
+    } catch (e) {
+      log("GET BUSES FUNCTION ERROR: $e");
+    }
   }
 
   void setLoading(bool val) {
@@ -79,8 +113,8 @@ class _UserHomeState extends State<UserHome> {
 
   @override
   void dispose() {
-    navigatorKey.currentContext?.read<UserController>().setController(null);
     super.dispose();
+    navigatorKey.currentContext?.read<UserController>().setController(null);
   }
 
   @override
@@ -122,89 +156,171 @@ class _UserHomeState extends State<UserHome> {
                       //   ),
                       // ):
                       Consumer<UserController>(builder: (context, val, _) {
-                        return GoogleMap(
-                          mapType: MapType.normal,
-                          initialCameraPosition: CameraPosition(
-                            target: LatLng(val.user?.latitude ?? 0,
-                                val.user?.longitude ?? 0),
-                            zoom: 14.4746,
-                          ),
-                          circles: val.circles,
-                          myLocationEnabled: true,
-                          onMapCreated: (GoogleMapController controller) {
-                            controller.setMapStyle(
-                                '[{"elementType":"geometry","stylers":[{"color":"#f5f5f5"}]},{"elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#616161"}]},{"elementType":"labels.text.stroke","stylers":[{"color":"#f5f5f5"}]},{"featureType":"administrative.land_parcel","elementType":"labels.text.fill","stylers":[{"color":"#bdbdbd"}]},{"featureType":"poi","elementType":"geometry","stylers":[{"color":"#eeeeee"}]},{"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#757575"}]},{"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#e5e5e5"}]},{"featureType":"poi.park","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#ffffff"}]},{"featureType":"road.arterial","elementType":"labels.text.fill","stylers":[{"color":"#757575"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#dadada"}]},{"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#616161"}]},{"featureType":"road.local","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]},{"featureType":"transit.line","elementType":"geometry","stylers":[{"color":"#e5e5e5"}]},{"featureType":"transit.station","elementType":"geometry","stylers":[{"color":"#eeeeee"}]},{"featureType":"water","elementType":"geometry","stylers":[{"color":"#c9c9c9"}]},{"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]}]');
-                            val.setController(controller);
-                            val.mapController?.animateCamera(
-                                CameraUpdate.newCameraPosition(CameraPosition(
-                                    target: LatLng(val.user?.latitude ?? 0,
-                                        val.user?.longitude ?? 0),
-                                    zoom: 14.4746)));
-                          },
-                          markers: 
-                              context.watch<UserController>().markers,
+                        return Stack(
+                          children: [
+                            GoogleMap(
+                              mapType: MapType.normal,
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(val.user?.latitude ?? 0,
+                                    val.user?.longitude ?? 0),
+                                zoom: 14.4746,
+                              ),
+                              myLocationButtonEnabled: true,
+                              circles: val.circles,
+                              myLocationEnabled: true,
+                              onMapCreated:
+                                  (GoogleMapController controller) async {
+                                controller.setMapStyle(
+                                    '[{"elementType":"geometry","stylers":[{"color":"#f5f5f5"}]},{"elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#616161"}]},{"elementType":"labels.text.stroke","stylers":[{"color":"#f5f5f5"}]},{"featureType":"administrative.land_parcel","elementType":"labels.text.fill","stylers":[{"color":"#bdbdbd"}]},{"featureType":"poi","elementType":"geometry","stylers":[{"color":"#eeeeee"}]},{"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#757575"}]},{"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#e5e5e5"}]},{"featureType":"poi.park","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#ffffff"}]},{"featureType":"road.arterial","elementType":"labels.text.fill","stylers":[{"color":"#757575"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#dadada"}]},{"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#616161"}]},{"featureType":"road.local","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]},{"featureType":"transit.line","elementType":"geometry","stylers":[{"color":"#e5e5e5"}]},{"featureType":"transit.station","elementType":"geometry","stylers":[{"color":"#eeeeee"}]},{"featureType":"water","elementType":"geometry","stylers":[{"color":"#c9c9c9"}]},{"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]}]');
+                                val.setController(controller);
+                                final pos =
+                                    await Geolocator.getLastKnownPosition();
+                                val.moveMap(CameraUpdate.newCameraPosition(
+                                    CameraPosition(
+                                        target: LatLng(pos?.latitude ?? 0,
+                                            pos?.longitude ?? 0),
+                                        zoom: 13.4746)));
+                              },
+                              markers: context.watch<UserController>().markers,
+                            ),
+                            // Positioned(
+                            //     left: 10,
+                            //     bottom: 100,
+                            //     child: Image.asset(ImagePath.appLogo,
+                            //         width: 45,
+                            //         height: 45,
+                            //         opacity: const AlwaysStoppedAnimation(.4))),
+                            // Positioned(
+                            //   right: 10,
+                            //   bottom: 100,
+                            //   child: Consumer<UserController>(
+                            //       builder: (context, val, _) {
+                            //     return GestureDetector(
+                            //       onTap: () async =>
+                            //           await Geolocator.getLastKnownPosition()
+                            //               .then((value) => val.animateMap(
+                            //                   CameraUpdate.newCameraPosition(
+                            //                       CameraPosition(
+                            //                           target: LatLng(
+                            //                               value?.latitude ?? 0,
+                            //                               value?.longitude ??
+                            //                                   0),
+                            //                           zoom: 13.4746))))
+                            //               .onError((error, stackTrace) =>
+                            //                   print(error)),
+                            //       child: Container(
+                            //         padding: const EdgeInsets.all(10),
+                            //         decoration: BoxDecoration(
+                            //             color: MyColors().whiteColor,
+                            //             borderRadius:
+                            //                 BorderRadius.circular(10)),
+                            //         child: Icon(Icons.my_location_outlined,
+                            //             color: MyColors().primaryColor),
+                            //       ),
+                            //     );
+                            //   }),
+                            // )
+                          ],
                         );
                       }),
-                      GestureDetector(
-                        onTap: () {
-                          FocusManager.instance.primaryFocus?.unfocus();
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: MyColors().whiteColor,
-                            borderRadius: BorderRadius.vertical(
-                                bottom: Radius.circular(15)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black
-                                    .withOpacity(0.2), // Shadow color
-                                blurRadius: 10, // Spread of the shadow
-                                spreadRadius: 5, // Size of the shadow
-                                offset: const Offset(
-                                    0, 4), // Position of the shadow
-                              ),
-                            ],
-                          ),
-                          padding: EdgeInsets.only(top: 7.h) +
-                              EdgeInsets.symmetric(horizontal: 4.w),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CustomAppBar(
-                                screenTitle: "Home",
-                                leading: MenuIcon(),
-                                trailing: NotificationIcon(),
-                                bottom: 2.h,
-                              ),
-                              SearchTile(
-                                showFilter: true,
-                                search: location,
-                                readOnly: true,
-                                onTap: () async {
-                                  await getAddress(context);
-                                },
-                                onTapFilter: () {
-                                  filter = !filter;
-                                  setState(() {});
-                                },
-                                onChange: (v) async {
-                                  // await getAddress(context);
-                                },
-                              ),
-                              SizedBox(
-                                height: 2.h,
-                              ),
-                              if (filter) ...[
-                                filterSheet(value.categories ?? []),
-                                SizedBox(
-                                  height: 2.h,
-                                ),
-                              ],
-                            ],
-                          ),
-
-                          // CustomAppBar(screenTitle:"Location",leading: CustomBackButton(),titleColor: MyColors().black,),
+                      // GestureDetector(
+                      //   onTap: () {
+                      //     FocusManager.instance.primaryFocus?.unfocus();
+                      //   },
+                      //   child:
+                      Container(
+                        decoration: BoxDecoration(
+                          color: MyColors().whiteColor,
+                          borderRadius: BorderRadius.vertical(
+                              bottom: Radius.circular(15)),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  Colors.black.withOpacity(0.2), // Shadow color
+                              blurRadius: 10, // Spread of the shadow
+                              spreadRadius: 5, // Size of the shadow
+                              offset:
+                                  const Offset(0, 4), // Position of the shadow
+                            ),
+                          ],
                         ),
+                        padding: EdgeInsets.only(top: 7.h) +
+                            EdgeInsets.symmetric(horizontal: 4.w),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CustomAppBar(
+                              screenTitle: "Home",
+                              leading: MenuIcon(),
+                              trailing: Row(
+                                children: [
+                                  FilterIcon(
+                                      onTap: () => [
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus(),
+                                            setState(() => filter = !filter)
+                                          ]),
+                                  SizedBox(width: 4.w),
+                                  NotificationIcon(),
+                                ],
+                              ),
+                              bottom: 2.h,
+                            ),
+                            SizedBox(height: 2.h),
+                            if (filter) ...[
+                              Consumer<UserController>(
+                                  builder: (context, val, _) {
+                                return Row(
+                                  children: [
+                                    Expanded(
+                                      child: Slider(
+                                          min: 5,
+                                          max: 25,
+                                          divisions: 4,
+                                          value: val.mile.toDouble(),
+                                          onChanged: (v) =>
+                                              val.setMile(v.toInt())),
+                                    ),
+                                    Text(
+                                      "${val.mile} Mile${val.mile > 1 ? "s" : ""}",
+                                      style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    )
+                                  ],
+                                );
+                              }),
+                              SizedBox(height: 2.h)
+                            ],
+                            //         SearchTile(
+                            //           showFilter: true,
+                            //           search: location,
+                            //           readOnly: true,
+                            //           onTap: () async {
+                            //             await getAddress(context);
+                            //           },
+                            //           onTapFilter: () {
+                            //             filter = !filter;
+                            //             setState(() {});
+                            //           },
+                            //           onChange: (v) async {
+                            //             // await getAddress(context);
+                            //           },
+                            //         ),
+                            //         SizedBox(
+                            //           height: 2.h,
+                            //         ),
+                            //         if (filter) ...[
+                            //           filterSheet(value.categories ?? []),
+                            //           SizedBox(
+                            //             height: 2.h,
+                            //           ),
+                            //         ],
+                          ],
+                        ),
+                        //     // CustomAppBar(screenTitle:"Location",leading: CustomBackButton(),titleColor: MyColors().black,),
+                        //   ),
                       ),
                     ],
                   );
@@ -777,7 +893,7 @@ class _UserHomeState extends State<UserHome> {
                           width: 4.w,
                         ),
                         half: Image.asset(
-                          ImagePath.star,
+                          ImagePath.starHalf,
                           width: 4.w,
                         ),
                         empty: Image.asset(

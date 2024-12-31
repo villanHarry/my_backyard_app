@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:backyard/Component/Appbar/appbar_components.dart';
 import 'package:backyard/Component/custom_background_image.dart';
 import 'package:backyard/Component/custom_padding.dart';
 import 'package:backyard/Controller/user_controller.dart';
 import 'package:backyard/Service/app_network.dart';
 import 'package:backyard/Service/auth_apis.dart';
+import 'package:backyard/Service/general_apis.dart';
 import 'package:backyard/Service/navigation_service.dart';
 import 'package:backyard/Utils/app_router_name.dart';
+import 'package:backyard/View/Authentication/change_password.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:backyard/View/Widget/appLogo.dart';
 import 'package:provider/provider.dart';
@@ -26,17 +26,20 @@ import 'package:flutter/services.dart';
 // import 'package:timer_builder/timer_builder.dart';
 
 class EnterOTPArguements {
-  EnterOTPArguements({this.phoneNumber, this.verification});
+  EnterOTPArguements({this.phoneNumber, this.verification, this.fromForgot});
 
   String? verification;
   String? phoneNumber;
+  bool? fromForgot;
 }
 
 class EnterOTP extends StatefulWidget {
-  EnterOTP({Key? key, this.phoneNumber, this.verification}) : super(key: key);
+  EnterOTP({Key? key, this.phoneNumber, this.verification, this.fromForgot})
+      : super(key: key);
 
   String? verification;
   final String? phoneNumber;
+  bool? fromForgot;
 
   @override
   State<EnterOTP> createState() => _EnterOTPState();
@@ -335,32 +338,40 @@ class _EnterOTPState extends State<EnterOTP> {
 
   Future<void> _onCompleteNavigation() async {
     FocusManager.instance.primaryFocus?.unfocus();
-    if (widget.verification != null) {
-      await verifyPhoneCode(
-          phoneNo: widget.phoneNumber,
-          verificationId: widget.verification ?? "",
-          verificationCode: otp.text);
-    } else {
-      AppNetwork.loadingProgressIndicator();
-      final value = await AuthAPIS.verifyAccount(
-          otpCode: otp.text, id: userController.user?.id ?? 0);
-      AppNavigation.navigatorPop();
-      if (value) {
-        CustomToast()
-            .showToast(message: 'Account validation completed. OTP verified');
-        navigation();
-      } else {
-        // CustomToast().showToast(message: 'Invalid OTP verification code');
-        otp.clear();
-      }
+    // if (widget.verification != null) {
+    //   await verifyPhoneCode(
+    //       phoneNo: widget.phoneNumber,
+    //       verificationId: widget.verification ?? "",
+    //       verificationCode: otp.text);
+    // } else {
+    AppNetwork.loadingProgressIndicator();
+    final value = await AuthAPIS.verifyAccount(
+        otpCode: otp.text, id: userController.user?.id ?? 0);
+    if (!(widget.fromForgot ?? false)) {
+      await GeneralAPIS.getPlaces();
     }
+    AppNavigation.navigatorPop();
+    if (value) {
+      CustomToast()
+          .showToast(message: 'Account validation completed. OTP verified');
+      navigation();
+    } else {
+      // CustomToast().showToast(message: 'Invalid OTP verification code');
+      otp.clear();
+    }
+    // }
   }
 
   void navigation() async {
-    if (userController.user?.isProfileCompleted == 1) {
-      AppNavigation.navigateTo(AppRouteName.HOME_SCREEN_ROUTE);
+    if (widget.fromForgot ?? false) {
+      AppNavigation.navigateReplacementNamed(
+          AppRouteName.CHANGE_PASSWORD_ROUTE);
     } else {
-      AppNavigation.navigateTo(AppRouteName.COMPLETE_PROFILE_SCREEN_ROUTE);
+      if (userController.user?.isProfileCompleted == 1) {
+        AppNavigation.navigateTo(AppRouteName.HOME_SCREEN_ROUTE);
+      } else {
+        AppNavigation.navigateTo(AppRouteName.COMPLETE_PROFILE_SCREEN_ROUTE);
+      }
     }
   }
 

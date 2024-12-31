@@ -1,3 +1,4 @@
+import 'package:backyard/Component/custom_terms_condition.dart';
 import 'package:backyard/Controller/user_controller.dart';
 import 'package:backyard/Utils/enum.dart';
 import 'package:flutter/services.dart';
@@ -65,6 +66,9 @@ class _RoleSelectionState extends State<RoleSelection> {
                 AppNavigation.navigateTo(AppRouteName.PRE_LOGIN_SCREEN_ROUTE);
               },
             ),
+            const Spacer(),
+            const CustomTermsCondition(),
+            SizedBox(height: 4.h),
           ],
         )),
       ),

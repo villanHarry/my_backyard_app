@@ -103,7 +103,7 @@ class _ContentScreenState extends State<ContentScreen> {
     return widget.contentType == AppStrings.CREATE_MERCHANT
         ? null
         : AppBar(
-            backgroundColor: MyColors().whiteColor,
+            backgroundColor: MyColors().black,
             leading: InkWell(
               onTap: () {
                 FocusManager.instance.primaryFocus?.unfocus();
@@ -116,10 +116,10 @@ class _ContentScreenState extends State<ContentScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: .6.h, horizontal: 1.h),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.black,
                   child: Icon(
                     Icons.arrow_back,
-                    color: Colors.black,
+                    color: Colors.white,
                     size: 18.sp,
                   ),
                 ),
@@ -137,7 +137,7 @@ class _ContentScreenState extends State<ContentScreen> {
                 size: 18,
                 toverflow: TextOverflow.ellipsis,
                 fontWeight: FontWeight.w700,
-                clr: MyColors().black),
+                clr: MyColors().whiteColor),
             elevation: 0,
           );
   }

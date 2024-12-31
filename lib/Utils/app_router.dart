@@ -1,3 +1,6 @@
+import 'package:backyard/View/Authentication/change_password.dart';
+import 'package:backyard/View/Authentication/edit_schedule_time.dart';
+import 'package:backyard/View/Authentication/forgot_password.dart';
 import 'package:backyard/View/Business/create_offer.dart';
 import 'package:backyard/View/Common/customer_profile.dart';
 import 'package:backyard/View/Common/favorite.dart';
@@ -52,15 +55,26 @@ class AppRouter {
             return LoginScreen();
           // case AppRouteName.FORGET_PASSWORD_ROUTE:
           //   return ForgotPassword();
+          // time scheduling edit screen
+          case AppRouteName.TIME_SCHEDULING_EDIT_SCREEN_ROUTE:
+            final arg = routeSettings.arguments as TimeSchedulingEditArgument?;
+            return TimeSchedulingEditScreen(val: arg?.val);
+          case AppRouteName.CHANGE_PASSWORD_ROUTE:
+            ChangePasswordArguments? arg =
+                routeSettings.arguments as ChangePasswordArguments?;
+            return ChangePassword(fromSettings: arg?.fromSettings);
+          case AppRouteName.FORGET_PASSWORD_ROUTE:
+            return const ForgotPasswordScreen();
           case AppRouteName.ENTER_OTP_SCREEN_ROUTE:
             EnterOTPArguements? arg =
                 routeSettings.arguments as EnterOTPArguements?;
             return EnterOTP(
-              phoneNumber: arg?.phoneNumber ?? "",
-              verification: arg?.verification,
-              // isFirebase: arg?.isFirebase ?? false,
-              // isFirebase: otpRoutingArgument?.isFirebase,
-            );
+                phoneNumber: arg?.phoneNumber ?? "",
+                verification: arg?.verification,
+                fromForgot: arg?.fromForgot
+                // isFirebase: arg?.isFirebase ?? false,
+                // isFirebase: otpRoutingArgument?.isFirebase,
+                );
           case AppRouteName.SCHEDULE_SCREEN_ROUTE:
             ScreenArguments? arg = routeSettings.arguments as ScreenArguments?;
             return Schedule(edit: arg?.fromEdit ?? false, args: arg?.args);
@@ -94,16 +108,21 @@ class AppRouter {
           case AppRouteName.LOYALTY_ROUTE:
             return LoyaltyProgram();
           case AppRouteName.DISCOUNT_OFFER_ROUTE:
-            return DiscountOffers();
+            DiscountOffersArguments? arg =
+                routeSettings.arguments as DiscountOffersArguments?;
+            return DiscountOffers(model: arg?.model, fromSaved: arg?.fromSaved);
           case AppRouteName.SEARCH_RESULT_ROUTE:
-            return SearchResult();
+            SearchResultArguments? arg =
+                routeSettings.arguments as SearchResultArguments?;
+            return SearchResult(categoryId: arg?.categoryId);
           case AppRouteName.GIVE_REVIEW_ROUTE:
-            return GiveReview();
+            GiveReviewArguments? arg =
+                routeSettings.arguments as GiveReviewArguments?;
+            return GiveReview(busId: arg?.busId);
           case AppRouteName.CREATE_OFFER_ROUTE:
             ScreenArguments? arg = routeSettings.arguments as ScreenArguments?;
             return CreateOffer(
-              edit: arg?.fromEdit ?? false,
-            );
+                edit: arg?.fromEdit ?? false, model: arg?.args?["offer"]);
           case AppRouteName.SUBSCRIPTION_SCREEN_ROUTE:
             ScreenArguments? arg = routeSettings.arguments as ScreenArguments?;
             return SubscriptionScreen(
@@ -142,6 +161,7 @@ class AppRouter {
             ProfileScreenArguments? arg =
                 routeSettings.arguments as ProfileScreenArguments?;
             return UserProfile(
+              isBusinessProfile: arg?.isBusinessProfile ?? false,
               user: arg?.user,
               isMe: arg?.isMe ?? false,
               isUser: arg?.isUser ?? false,
@@ -149,9 +169,7 @@ class AppRouter {
           case AppRouteName.CustomerProfile:
             ProfileScreenArguments? arg =
                 routeSettings.arguments as ProfileScreenArguments?;
-            return CustomerProfile(
-              isMe: arg?.isMe ?? false,
-            );
+            return CustomerProfile(isMe: arg?.isMe ?? false, user: arg?.user);
           default:
             return Container();
         }

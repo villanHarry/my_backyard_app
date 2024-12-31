@@ -69,7 +69,7 @@ class _AllReviewsState extends State<AllReviews> {
                       width: 4.w,
                     ),
                     half: Image.asset(
-                      ImagePath.star,
+                      ImagePath.starHalf,
                       width: 4.w,
                     ),
                     empty: Image.asset(

@@ -9,6 +9,9 @@ import 'package:backyard/Component/custom_refresh.dart';
 import 'package:backyard/Component/custom_text.dart';
 import 'package:backyard/Component/custom_toast.dart';
 import 'package:backyard/Controller/home_controller.dart';
+import 'package:backyard/Controller/user_controller.dart';
+import 'package:backyard/Model/offer_model.dart';
+import 'package:backyard/Service/bus_apis.dart';
 // import 'package:backyard/Model/session_model.dart';
 // import 'package:backyard/Model/shop_model.dart';
 // import 'package:backyard/Model/user_model.dart';
@@ -16,6 +19,7 @@ import 'package:backyard/Utils/app_router_name.dart';
 import 'package:backyard/Utils/app_strings.dart';
 import 'package:backyard/Utils/enum.dart';
 import 'package:backyard/Utils/my_colors.dart';
+import 'package:backyard/View/User/discount_offers.dart';
 import 'package:backyard/View/Widget/search_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:backyard/View/Widget/Dialog/payment_dialog.dart';
@@ -41,11 +45,26 @@ class _OffersState extends State<Offers> {
   List<String> trainerList = ['Assigned', 'In progress', 'Completed'],
       traineeList = ['Pending', 'Assigned', 'In progress', 'Completed'];
   String i = '';
+  final homeController = navigatorKey.currentContext?.read<HomeController>();
+  final userController = navigatorKey.currentContext?.read<UserController>();
 
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      setLoading(true);
+      await getOffers();
+      setLoading(false);
+    });
     // TODO: implement initState
     super.initState();
+  }
+
+  void setLoading(bool val) {
+    homeController?.setLoading(val);
+  }
+
+  Future<void> getOffers() async {
+    await BusAPIS.getSavedOrOwnedOffers(isSwitch: userController?.isSwitch);
   }
 
   @override
@@ -119,8 +138,36 @@ class _OffersState extends State<Offers> {
                   //     fontWeight: FontWeight.w600,
                   //   ),
                   // ),
+                  if (val.loading)
+                    Column(
+                      children: [
+                        SizedBox(height: 20.h),
+                        Center(
+                          child: CircularProgressIndicator(
+                              color: MyColors().greenColor),
+                        ),
+                      ],
+                    )
+                  else if ((val.offers ?? []).isEmpty)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          children: [
+                            SizedBox(height: 20.h),
+                            Center(
+                              child: CustomEmptyData(
+                                title: 'No Offers Found',
+                                hasLoader: false,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    offerList(val.offers ?? []),
                   SizedBox(height: 2.h),
-                  // offerList(s: d.completedSessions),
                 ],
               ),
             );
@@ -128,6 +175,20 @@ class _OffersState extends State<Offers> {
         ),
       ),
     );
+  }
+
+  Widget offerList(List<Offer> val) {
+    return Expanded(
+        child: ListView(
+      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.h),
+      physics: const AlwaysScrollableScrollPhysics(),
+      shrinkWrap: true,
+      children: [
+        for (int index = 0; index < val.length; index++)
+          OfferTile(model: val[index], fromSaved: true),
+        SizedBox(height: 5.h),
+      ],
+    ));
   }
 
   // sessionCard({required SessionModel s}) {
@@ -560,17 +621,24 @@ class _OffersState extends State<Offers> {
 }
 
 class OfferTile extends StatelessWidget {
-  OfferTile({super.key, this.index, this.availed = false});
+  OfferTile(
+      {super.key,
+      this.index,
+      this.fromSaved = false,
+      this.model,
+      this.availed = false});
   int? index;
-  // String? title;
-  // String? amount;
+  Offer? model;
+  final bool fromSaved;
   bool availed = false;
   @override
   Widget build(BuildContext context) {
     return Consumer<HomeController>(builder: (context, val, _) {
       return GestureDetector(
         onTap: () {
-          AppNavigation.navigateTo(AppRouteName.DISCOUNT_OFFER_ROUTE);
+          AppNavigation.navigateTo(AppRouteName.DISCOUNT_OFFER_ROUTE,
+              arguments:
+                  DiscountOffersArguments(model: model, fromSaved: fromSaved));
         },
         child: Container(
           decoration: BoxDecoration(
@@ -588,11 +656,18 @@ class OfferTile extends StatelessWidget {
           margin: EdgeInsets.only(bottom: 1.5.h, top: 1.5.h),
           child: Row(
             children: [
-              Image.asset(
-                ImagePath.random,
-                scale: 2,
-                fit: BoxFit.cover,
-              ),
+              // Image.asset(
+              //   ImagePath.random,
+              //   scale: 2,
+              //   fit: BoxFit.cover,
+              // ),
+
+              CustomImage(
+                  width: 20.w,
+                  height: 10.h,
+                  fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(10),
+                  url: model?.image),
               SizedBox(
                 width: 2.w,
               ),
@@ -602,25 +677,32 @@ class OfferTile extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        SizedBox(width: 1.w),
-                        Text(
-                          'Deal 01',
-                          style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14.sp,
-                              color: Colors.black),
+                        // SizedBox(width: 1.w),
+                        SizedBox(
+                          // width: 28.w,
+                          width: 26.w,
+                          child: Text(
+                            model?.title ?? "",
+                            maxLines: 2,
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.sp,
+                                color: Colors.black),
+                          ),
                         ),
-                        SizedBox(width: 1.5.w),
+                        // SizedBox(width: 1.5.w),
                         Container(
+                          width: 15.w,
                           decoration: BoxDecoration(
                               color: MyColors().primaryColor,
                               borderRadius: BorderRadius.circular(20)),
                           padding: EdgeInsets.all(4) +
                               EdgeInsets.symmetric(horizontal: 6),
                           child: MyText(
-                            title: 'Food',
+                            toverflow: TextOverflow.ellipsis,
+                            title: model?.category?.categoryName ?? "",
                             clr: MyColors().whiteColor,
-                            size: 11,
+                            size: 9,
                           ),
                         ),
                         const Spacer(),
@@ -651,14 +733,16 @@ class OfferTile extends StatelessWidget {
                           ),
                         ] else ...[
                           MyText(
-                            title: '\$50   ',
+                            title:
+                                '\$${model?.actualPrice?.toStringAsFixed(2) ?? ""}   ',
                             fontWeight: FontWeight.w600,
                             size: 12,
                             clr: MyColors().grey,
                             cut: true,
                           ),
                           MyText(
-                            title: '\$40',
+                            title:
+                                '\$${model?.discountPrice?.toStringAsFixed(2) ?? ""}',
                             fontWeight: FontWeight.w600,
                             size: 12,
                           ),
@@ -677,12 +761,16 @@ class OfferTile extends StatelessWidget {
                                 height: 13.sp,
                                 fit: BoxFit.fitHeight),
                             SizedBox(width: 1.w),
-                            Text(
-                              'Bouddha, Chabil',
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 10.sp,
-                                  color: Colors.black),
+                            SizedBox(
+                              width: 60.w,
+                              child: Text(
+                                model?.address ?? "",
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 10.sp,
+                                    color: Colors.black),
+                              ),
                             ),
                           ],
                         ),
@@ -715,7 +803,8 @@ class OfferTile extends StatelessWidget {
                         SizedBox(width: 1.w),
                         Expanded(
                           child: Text(
-                            '15% Discount on food and beverage',
+                            // '15% Discount on food and beverage',
+                            model?.shortDetail ?? "",
                             style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w400,
                                 fontSize: 10.sp,

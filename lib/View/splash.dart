@@ -32,9 +32,9 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // saveFCMToken();
     timer = Timer(const Duration(seconds: 3), () async {
-      pin = await BitmapDescriptor.fromAssetImage(
-          const ImageConfiguration(size: Size(100, 100)),
-          ImagePath.homeAltered);
+      // pin = await BitmapDescriptor.fromAssetImage(
+      //     const ImageConfiguration(size: Size(100, 100)),
+      //     ImagePath.homeAltered);
 
       SharedPreference localDatabase = SharedPreference();
       await localDatabase.sharedPreference;
@@ -46,7 +46,8 @@ class _SplashScreenState extends State<SplashScreen> {
       if (user != null) {
         userFunction(user);
       } else {
-        AppNavigation.navigateReplacementNamed(AppRouteName.ROLE_SELECTION);
+        final val = localDatabase.getSavedUser();
+        AppNavigation.navigateReplacementNamed(AppRouteName.LOGIN_SCREEN_ROUTE);
       }
     });
     // setNotifications(context);

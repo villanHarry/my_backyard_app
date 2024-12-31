@@ -1,8 +1,13 @@
+import 'package:backyard/Component/custom_toast.dart';
+import 'package:backyard/Service/navigation_service.dart';
+import 'package:backyard/Utils/app_router_name.dart';
 import 'package:backyard/View/Business/create_offer.dart';
 import 'package:backyard/View/Business/customers.dart';
 import 'package:backyard/View/Common/Settings/settings.dart';
 import 'package:backyard/View/User/category.dart';
+import 'package:backyard/main.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,20 +29,26 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int index = 0;
+  final key = GlobalKey<ScaffoldState>();
   int inActiveColor = 0XFFD2D2D2;
   int activeColor = 0XFF57BA00;
   late final business =
-      context.read<UserController>().user?.role == Role.Business;
+      (navigatorKey.currentContext?.read<UserController>().isSwitch ?? false)
+          ? false
+          : navigatorKey.currentContext?.read<UserController>().user?.role ==
+              Role.Business;
 
   void setIndex(int val) {
-    index = val;
+    navigatorKey.currentContext?.read<HomeController>().setIndex(val);
     setState(() {});
   }
 
   @override
   void initState() {
-    
+    navigatorKey.currentContext?.read<HomeController>().setGlobalKey(key);
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      navigatorKey.currentContext?.read<HomeController>().setIndex(0);
+    });
     // TODO: implement initState
     super.initState();
   }
@@ -49,102 +60,143 @@ class _HomeViewState extends State<HomeView> {
       onWillPop: () {
         return onWillPop(context);
       },
-      child: Consumer<HomeController>(builder: (context, val, _) {
+      child: Consumer2<HomeController, UserController>(
+          builder: (context, val, val2, _) {
         return Scaffold(
+          key: key,
           backgroundColor: Colors.white,
-          key: val.drawerKey,
           resizeToAvoidBottomInset: false,
           // extendBodyBehindAppBar: true,
           drawer: CustomDrawer(),
           // body: GetBuilder<HomeController>(
           //     builder: (context) {
-          //       return business? (businessPages[h.currentIndex.value]):userPages[h.currentIndex.value];
+          //       return business? (businessPages[h.currentval.currentIndex.value]):userPages[h.currentval.currentIndex.value];
           //     }
           // ),
           // bottomNavigationBar: CustomBottomBar(),
 
-          body: !(business)
-              ? Scaffold(
-                  backgroundColor: Colors.transparent,
-                  body: Stack(children: [
-                    SizedBox(height: 1.sh - 100, child: userPages[index]),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        height: 108,
-                        width: 1.sw,
-                        padding: EdgeInsets.symmetric(horizontal: 19.sp),
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20)),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            for (int i = 0; i < userTabs.length; i++)
-                              GestureDetector(
-                                onTap: () => setIndex(i),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset(userTabs[i]["icon"] ?? "",
-                                        scale: 1,
-                                        fit: BoxFit.fitHeight,
-                                        color: Color(index == i
-                                            ? activeColor
-                                            : inActiveColor),
-                                        height: 22.sp),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      userTabs[i]["title"] ?? "",
-                                      style: TextStyle(
-                                        color: Color(index == i
-                                            ? activeColor
-                                            : inActiveColor),
-                                        fontWeight: index == i
-                                            ? FontWeight.w600
-                                            : FontWeight.w500,
-                                        fontSize: index == i ? 14.sp : 12.sp,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: (!business)
+              ? null
+              : GestureDetector(
+                  onTap: () {
+                    if (val2.user?.subId != null) {
+                      AppNavigation.navigateTo(AppRouteName.CREATE_OFFER_ROUTE);
+                    } else {
+                      AppNavigation.navigateTo(
+                          AppRouteName.SUBSCRIPTION_SCREEN_ROUTE);
+                      CustomToast().showToast(
+                          message: "You Need to Subscribe to Create an Offer.");
+                    }
+                  },
+                  child: Container(
+                    height: 50.h,
+                    width: 50.h,
+                    decoration: BoxDecoration(
+                        color: MyColors().whiteColor, shape: BoxShape.circle),
+                    child: Image.asset(ImagePath.add,
+                        fit: BoxFit.fitHeight, color: Color(activeColor)),
+                  ),
+                ),
+          bottomNavigationBar: Container(
+            height: 90,
+            width: 1.sw,
+            padding: EdgeInsets.symmetric(horizontal: 19.sp, vertical: 15.sp),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Colors.black12,
+                      offset: Offset(0, -5),
+                      blurRadius: 10)
+                ]),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < userTabs.length; i++)
+                  Padding(
+                    padding: EdgeInsets.only(
+                        right: business
+                            ? ((i == ((businessTab.length / 2) - 1)) ? 10.w : 0)
+                            : 0,
+                        left: business
+                            ? ((i == (businessTab.length / 2)) ? 10.w : 0)
+                            : 0),
+                    child: GestureDetector(
+                      onTap: () => setIndex(i),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                              business
+                                  ? (businessTab[i]["icon"] ?? "")
+                                  : (userTabs[i]["icon"] ?? ""),
+                              scale: 1,
+                              fit: BoxFit.fitHeight,
+                              color: Color(val.currentIndex == i
+                                  ? activeColor
+                                  : inActiveColor),
+                              height: 22.sp),
+                          const SizedBox(height: 6),
+                          Text(
+                            business
+                                ? (businessTab[i]["title"] ?? "")
+                                : (userTabs[i]["title"] ?? ""),
+                            style: TextStyle(
+                              color: Color(val.currentIndex == i
+                                  ? activeColor
+                                  : inActiveColor),
+                              fontWeight: val.currentIndex == i
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                              fontSize: val.currentIndex == i ? 14.sp : 12.sp,
+                            ),
+                          )
+                        ],
                       ),
                     ),
-                  ]),
-                )
-              : PersistentTabView(
-                  context,
-                  controller: val.homeBottom,
-                  screens: businessPages,
-                  // (trainer? (trainerPages[h.currentIndex.value]):traineePages[h.currentIndex.value]),
-                  items: businessTab,
-                  confineToSafeArea: false,
-                  navBarHeight: 65,
-                  stateManagement: false,
-                  backgroundColor:
-                      Colors.white, // Customize the background color
-                  handleAndroidBackButtonPress: true,
-                  resizeToAvoidBottomInset: false,
-                  decoration: NavBarDecoration(
-                    borderRadius: BorderRadius.circular(0.0),
-                    colorBehindNavBar: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2), // Shadow color
-                        blurRadius: 10, // Spread of the shadow
-                        spreadRadius: 5, // Size of the shadow
-                        offset: const Offset(0, 4), // Position of the shadow
-                      ),
-                    ],
                   ),
-                  bottomScreenMargin: 75,
-                  padding: EdgeInsets.only(top: 0, bottom: 10),
-                  // margin: const EdgeInsets.symmetric(vertical: 50), // Adjust the margin if needed
-                  navBarStyle: NavBarStyle.style15, // Set the style to style15
-                ),
+              ],
+            ),
+          ),
+          body: (business)
+              ? businessPages[val.currentIndex]
+              : userPages[val.currentIndex],
+
+          // :
+          // PersistentTabView(
+          //     context,
+          //     controller: val.homeBottom,
+          //     screens: businessPages,
+          //     // (trainer? (trainerPages[h.currentval.currentIndex.value]):traineePages[h.currentval.currentIndex.value]),
+          //     items: businessTab,
+          //     confineToSafeArea: false,
+          //     navBarHeight: 65,
+          //     stateManagement: false,
+          //     backgroundColor:
+          //         Colors.white, // Customize the background color
+          //     handleAndroidBackButtonPress: true,
+          //     resizeToAvoidBottomInset: false,
+          //     decoration: NavBarDecoration(
+          //       borderRadius: BorderRadius.circular(0.0),
+          //       colorBehindNavBar: Colors.white,
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: Colors.black.withOpacity(0.2), // Shadow color
+          //           blurRadius: 10, // Spread of the shadow
+          //           spreadRadius: 5, // Size of the shadow
+          //           offset: const Offset(0, 4), // Position of the shadow
+          //         ),
+          //       ],
+          //     ),
+          //     bottomScreenMargin: 75,
+          //     padding: EdgeInsets.only(top: 0, bottom: 10),
+          //     // margin: const EdgeInsets.symmetric(vertical: 50), // Adjust the margin if needed
+          //     navBarStyle: NavBarStyle.style15, // Set the style to style15
+          //   ),
           extendBody: false,
         );
       }),
@@ -161,10 +213,10 @@ class _HomeViewState extends State<HomeView> {
   List<Widget> businessPages = <Widget>[
     const BusinessHome(),
     const Customers(),
-    CreateOffer(),
+    // CreateOffer(),
     const Settings(),
     UserProfile(
-      isUser: false,
+      isUser: true,
       isMe: true,
     )
   ];
@@ -202,37 +254,43 @@ class _HomeViewState extends State<HomeView> {
     {"title": "Saved", "icon": ImagePath.savedOffersIcon},
     {"title": "Profile", "icon": ImagePath.profile},
   ];
-  List<PersistentBottomNavBarItem> businessTab = <PersistentBottomNavBarItem>[
-    PersistentBottomNavBarItem(
-        icon: Image.asset(ImagePath.home5, scale: 1),
-        inactiveIcon: Image.asset(ImagePath.home4, scale: 1),
-        title: 'Home',
-        activeColorPrimary: MyColors().primaryColor,
-        activeColorSecondary: MyColors().primaryColor),
-    PersistentBottomNavBarItem(
-        icon: Image.asset(ImagePath.customers2, scale: 1),
-        inactiveIcon: Image.asset(ImagePath.customers, scale: 1),
-        title: 'Customers',
-        activeColorPrimary: MyColors().primaryColor,
-        activeColorSecondary: MyColors().primaryColor),
-    PersistentBottomNavBarItem(
-        icon: Image.asset(ImagePath.add, scale: 2),
-        title: '',
-        activeColorSecondary: MyColors().primaryColor,
-        activeColorPrimary: MyColors().whiteColor),
-    PersistentBottomNavBarItem(
-        icon: Image.asset(ImagePath.setting2, scale: 1),
-        inactiveIcon: Image.asset(ImagePath.settings, scale: 1),
-        title: 'Settings',
-        activeColorPrimary: MyColors().primaryColor,
-        activeColorSecondary: MyColors().primaryColor),
-    PersistentBottomNavBarItem(
-        icon: Image.asset(ImagePath.profile2, scale: 1),
-        inactiveIcon: Image.asset(ImagePath.profile, scale: 1),
-        title: 'Profile',
-        activeColorPrimary: MyColors().primaryColor,
-        activeColorSecondary: MyColors().primaryColor),
+  List<Map<String, String>> businessTab = [
+    {"title": "Home", "icon": ImagePath.home5},
+    {"title": "Customers", "icon": ImagePath.customers2},
+    {"title": "Settings", "icon": ImagePath.setting2},
+    {"title": "Profile", "icon": ImagePath.profile},
   ];
+  // List<PersistentBottomNavBarItem> businessTab = <PersistentBottomNavBarItem>[
+  //   PersistentBottomNavBarItem(
+  //       icon: Image.asset(ImagePath.home5, scale: 1),
+  //       inactiveIcon: Image.asset(ImagePath.home4, scale: 1),
+  //       title: 'Home',
+  //       activeColorPrimary: MyColors().primaryColor,
+  //       activeColorSecondary: MyColors().primaryColor),
+  //   PersistentBottomNavBarItem(
+  //       icon: Image.asset(ImagePath.customers2, scale: 1),
+  //       inactiveIcon: Image.asset(ImagePath.customers, scale: 1),
+  //       title: 'Customers',
+  //       activeColorPrimary: MyColors().primaryColor,
+  //       activeColorSecondary: MyColors().primaryColor),
+  //   PersistentBottomNavBarItem(
+  //       icon: Image.asset(ImagePath.add, scale: 2),
+  //       title: '',
+  //       activeColorSecondary: MyColors().primaryColor,
+  //       activeColorPrimary: MyColors().whiteColor),
+  //   PersistentBottomNavBarItem(
+  //       icon: Image.asset(ImagePath.setting2, scale: 1),
+  //       inactiveIcon: Image.asset(ImagePath.settings, scale: 1),
+  //       title: 'Settings',
+  //       activeColorPrimary: MyColors().primaryColor,
+  //       activeColorSecondary: MyColors().primaryColor),
+  //   PersistentBottomNavBarItem(
+  //       icon: Image.asset(ImagePath.profile2, scale: 1),
+  //       inactiveIcon: Image.asset(ImagePath.profile, scale: 1),
+  //       title: 'Profile',
+  //       activeColorPrimary: MyColors().primaryColor,
+  //       activeColorSecondary: MyColors().primaryColor),
+  // ];
 
   onWillPop(context) async {
     SystemChannels.platform.invokeMethod('SystemNavigator.pop');

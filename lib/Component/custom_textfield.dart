@@ -48,65 +48,70 @@ class MyTextField extends StatefulWidget {
       numberWithDecimal;
   final int? maxLength, minLines, maxLines;
   final bool? filed;
+  final bool? enable;
   final double? elevation, fontSize;
   final double? prefixIconSize;
   final String? prefixText;
+  final BoxConstraints? suffixIconConstraints;
   final TextInputAction? inputAction;
   final TextInputFormatter? inputFormate;
+  final TextAlign? textAlign;
   static const Color _textFieldThemeColor = Color(0xff707070);
 
-  MyTextField({
-    super.key,
-    this.onChanged,
-    this.inputAction,
-    this.elevation,
-    this.maxLength,
-    this.horizontalPadding,
-    this.width,
-    this.validate,
-    this.showLabel = false,
-    this.inputFormate,
-    this.onlyNumber,
-    this.cardExpiration,
-    this.fontSize,
-    this.prefixText,
-    this.height,
-    this.contact,
-    this.numberWithDecimal,
-    this.fullBorder,
-    this.borderColor = Colors.white,
-    this.inputDecoration,
-    this.cardFormat,
-    this.multiIcon,
-    this.title,
-    this.onTap,
-    this.controller,
-    this.verticalPadding,
-    this.borderRadius = 10,
-    this.validation,
-    this.onFieldSubmit,
-    this.hintText,
-    this.onTapSuffixIcon,
-    this.suffixIconData,
-    this.prefixIconData,
-    this.prefixIconSize,
-    this.onTapPrefixIcon,
-    this.focusNode,
-    this.backgroundColor,
-    this.hintTextColor = const Color(0xff374856),
-    this.cursorColor = _textFieldThemeColor,
-    this.textColor = Colors.black,
-    this.prefixIconColor,
-    this.sufixIconColor = _textFieldThemeColor,
-    this.prefixWidget,
-    this.inputType = TextInputType.text,
-    this.obscureText = false,
-    this.suffixIcons,
-    this.readOnly,
-    this.filed,
-    this.minLines,
-    this.maxLines,
-  });
+  MyTextField(
+      {super.key,
+      this.onChanged,
+      this.inputAction,
+      this.elevation,
+      this.maxLength,
+      this.textAlign,
+      this.suffixIconConstraints,
+      this.horizontalPadding,
+      this.width,
+      this.validate,
+      this.showLabel = false,
+      this.inputFormate,
+      this.onlyNumber,
+      this.cardExpiration,
+      this.fontSize,
+      this.prefixText,
+      this.height,
+      this.contact,
+      this.numberWithDecimal,
+      this.fullBorder,
+      this.borderColor = Colors.white,
+      this.inputDecoration,
+      this.cardFormat,
+      this.multiIcon,
+      this.title,
+      this.onTap,
+      this.controller,
+      this.verticalPadding,
+      this.borderRadius = 10,
+      this.validation,
+      this.onFieldSubmit,
+      this.hintText,
+      this.onTapSuffixIcon,
+      this.suffixIconData,
+      this.prefixIconData,
+      this.prefixIconSize,
+      this.onTapPrefixIcon,
+      this.focusNode,
+      this.backgroundColor,
+      this.hintTextColor = const Color(0xff374856),
+      this.cursorColor = _textFieldThemeColor,
+      this.textColor = Colors.black,
+      this.prefixIconColor,
+      this.sufixIconColor = _textFieldThemeColor,
+      this.prefixWidget,
+      this.inputType = TextInputType.text,
+      this.obscureText = false,
+      this.suffixIcons,
+      this.readOnly,
+      this.filed,
+      this.minLines,
+      this.maxLines,
+      this.enable});
 
   @override
   _TextFieldState createState() => _TextFieldState();
@@ -147,7 +152,8 @@ class _TextFieldState extends State<MyTextField> {
             widget.onTap?.call();
           }
         },
-
+        textAlign: widget.textAlign ?? TextAlign.start,
+        enabled: widget.enable,
         readOnly: widget.readOnly ?? false,
         obscureText: widget.obscureText!,
         obscuringCharacter: "*",
@@ -229,13 +235,14 @@ class _TextFieldState extends State<MyTextField> {
               ),
               prefixText: widget.prefixText ?? "",
               // vertical: widget.fullBorder == false ? 15 : 2),
-              suffixIcon: widget.suffixIconData == null
-                  ? null
-                  : GestureDetector(
-                      onTap: () {
-                        widget.onTapSuffixIcon!();
-                      },
-                      child: widget.suffixIconData),
+              suffixIcon: widget.suffixIcons,
+              // widget.suffixIconData == null
+              //     ? null
+              //     : GestureDetector(
+              //         onTap: () {
+              //           widget.onTapSuffixIcon!();
+              //         },
+              //         child: widget.suffixIconData),
               prefixIcon: widget.prefixWidget ??
                   (widget.prefixIconData == null
                       ? null
@@ -282,7 +289,8 @@ class _TextFieldState extends State<MyTextField> {
                                   : widget.textColor!,
                               width: 1),
                         ),
-              suffix: widget.suffixIcons,
+              // suffix: widget.suffixIcons,
+              suffixIconConstraints: widget.suffixIconConstraints,
               enabledBorder:
                   (widget.fullBorder == true || widget.fullBorder == null)
                       ? OutlineInputBorder(
@@ -336,6 +344,7 @@ class _TextFieldState extends State<MyTextField> {
                               : MyColors().hintColor,
                           width: 1),
                     ),
+              errorMaxLines: 3,
               errorBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(widget.borderRadius ?? 25),

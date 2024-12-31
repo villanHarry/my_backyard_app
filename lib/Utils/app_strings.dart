@@ -36,7 +36,7 @@ class AppStrings {
 
   static const PRIVACY_POLICY_TYPE = 'pp';
   static const TERMS_AND_CONDITION_TYPE = 'tc';
-  static const ABOUT_APP_TYPE = 'auw';
+  static const ABOUT_APP_TYPE = 'au';
 
   static const String MONTH_DATE_YEAR_HOUR_MIN = "yyyy-MM-dd hh:mm a";
 

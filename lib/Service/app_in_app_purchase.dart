@@ -46,8 +46,8 @@ class AppInAppPurchase {
     navigatorKey.currentContext
         ?.read<UserController>()
         .setProductDetails(response.productDetails);
-    CustomToast().showToast(
-        message: "Subscriptions Fetched: ${response.productDetails.length}");
+    // CustomToast().showToast(
+    //     message: "Subscriptions Fetched: ${response.productDetails.length}");
   }
 
   // Buy a subscription

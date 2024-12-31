@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:backyard/Controller/state_management.dart';
 import 'package:backyard/Service/app_in_app_purchase.dart';
@@ -72,7 +73,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-GlobalKey<NavigatorState> navigatorKey = GlobalKey();
+final navigatorKey = GlobalKey<NavigatorState>();
 
 class MyHttpOverrides extends HttpOverrides {
   @override

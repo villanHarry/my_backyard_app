@@ -1,14 +1,19 @@
-import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:backyard/Utils/my_colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image/image.dart' as img;
 import 'package:backyard/Service/auth_apis.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:backyard/Component/custom_toast.dart';
-import 'package:backyard/Controller/home_controller.dart';
 import 'package:jiffy/jiffy.dart';
-import 'package:backyard/Model/notification_model.dart';
-import 'package:backyard/Model/user_model.dart';
 import 'package:backyard/Service/navigation_service.dart';
 import 'package:backyard/Utils/app_router_name.dart';
 import 'package:intl/intl.dart';
@@ -16,9 +21,65 @@ import 'package:backyard/Utils/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:backyard/main.dart';
 import 'package:place_picker/place_picker.dart';
-import 'local_shared_preferences.dart';
+import 'package:encrypt/encrypt.dart' as en;
 
 class Utils {
+  static final key = en.Key.fromUtf8('3Df7G9uWq8s2BxM4Tz1pV5cK7nL0yQ6h');
+  static final iv = en.IV.fromLength(16);
+  static String getDuration(DateTime? val) {
+    final duration = DateTime.now().difference(val ?? DateTime.now());
+    int min = duration.inMinutes;
+    int hour = duration.inHours;
+    int days = duration.inDays;
+    int month = days ~/ 30;
+    int year = days ~/ 365;
+    if (min.isNegative) {
+      min = min * -1;
+    }
+    if (hour.isNegative) {
+      hour = hour * -1;
+    }
+    if (days.isNegative) {
+      days = days * -1;
+    }
+    if (month.isNegative) {
+      month = month * -1;
+    }
+    if (year.isNegative) {
+      year = year * -1;
+    }
+
+    if (min < 60) {
+      return "$min Mins Ago";
+    }
+    if (hour < 60) {
+      return "$hour Hrs Ago";
+    }
+    if (days < 30) {
+      return "$days Days Ago";
+    }
+    if (month < 12) {
+      return "$days Days Ago";
+    }
+
+    return "$year Years Ago";
+  }
+
+  static String checkClosed(String? startTime, String? endTime) {
+    if (startTime != null && endTime != null) {
+      return "${timeFormat(startTime)} - ${timeFormat(endTime)}";
+    } else {
+      return "Closed";
+    }
+  }
+
+  static String timeFormat(String val) {
+    int hour = int.parse(val.split(":")[0]);
+    int min = int.parse(val.split(":")[1]);
+    return TimeOfDay(hour: hour, minute: min)
+        .format(navigatorKey.currentContext!);
+  }
+
   static const String mDY = 'MM-dd-yyyy';
   DateTime selectedDate = DateTime.now();
   String formattedDate = "";
@@ -64,13 +125,144 @@ class Utils {
     }
   }
 
+  static Future<ByteData> getCircularImageByteData(ui.Image image) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(
+        pictureRecorder,
+        Rect.fromPoints(const Offset(0, 0),
+            Offset(image.width.toDouble(), image.height.toDouble())));
+
+    // Draw the image inside a circular clip
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = MyColors().primaryColor
+      ..strokeWidth = 15.0;
+
+    final radius = image.width / 2;
+
+    // Clip the canvas to a circular shape
+    canvas.clipPath(Path()
+      ..addOval(Rect.fromCircle(
+          center: Offset(image.width / 2, image.height / 2), radius: radius)));
+
+    // Draw the image inside the circular path
+    canvas.drawImage(image, const Offset(0, 0), paint);
+
+    // Draw the stroke (circle border) around the clipped area
+    canvas.drawCircle(Offset(image.width / 2, image.height / 2), radius, paint);
+
+    // Convert the canvas to an image and then to ByteData
+    final picture = pictureRecorder.endRecording();
+    final img = await picture.toImage(image.width, image.height);
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    return byteData!;
+  }
+
+  static Future<Uint8List?> loadNetWorkImage(String path) async {
+    final completer = Completer<ImageInfo>();
+    var image = CachedNetworkImageProvider(path);
+
+    image.resolve(const ImageConfiguration()).addListener(
+        ImageStreamListener((info, _) => completer.complete(info)));
+    final imageInfo = await completer.future;
+    final byteData =
+        await imageInfo.image.toByteData(format: ui.ImageByteFormat.png);
+
+    return byteData?.buffer.asUint8List();
+  }
+
+  static Future<BitmapDescriptor> getNetworkImageMarker3() async {
+    const size = 50.0; // Size of the circle
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder,
+        Rect.fromPoints(const Offset(0, 0), const Offset(size, size)));
+
+    final paint = Paint()
+      ..color = MyColors().primaryColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(const Offset(size / 2, size / 2), size / 2, paint);
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(size.toInt(), size.toInt());
+
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(pngBytes);
+  }
+
+  static Future<BitmapDescriptor> getNetworkImageMarker2(
+      String imageUrl) async {
+    Uint8List? image = await loadNetWorkImage(imageUrl);
+    final ui.Codec markerImageCodec = await ui.instantiateImageCodec(
+        image!.buffer.asUint8List(),
+        targetHeight: 100,
+        targetWidth: 100);
+    final ui.FrameInfo frameInfo = await markerImageCodec.getNextFrame();
+    final byteData = await getCircularImageByteData(frameInfo.image);
+    // await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+    await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List resizedImageMarker = byteData!.buffer.asUint8List();
+    return BitmapDescriptor.fromBytes(resizedImageMarker);
+  }
+
+  static Future<BitmapDescriptor> getNetworkImageMarker(String imageUrl) async {
+    int size = .18.sw.toInt();
+    final response = await HttpClient().getUrl(Uri.parse(imageUrl));
+    final bytes = await response.close().then((response) =>
+        response.fold<Uint8List>(Uint8List(0),
+            (previous, current) => Uint8List.fromList(previous + current)));
+    // Decode the image from bytes
+    img.Image? image = img.decodeImage(bytes);
+
+    if (image == null) {
+      throw Exception('Failed to decode image');
+    }
+
+    // Resize the image
+    img.Image resizedImage = img.copyResize(image, width: size, height: size);
+
+    // Create a circular mask (cutting out the circle)
+    img.Image circularImage = img.Image(
+        width: size, height: size, backgroundColor: img.ColorRgba8(0, 0, 0, 0));
+
+    // Draw a circle mask over the image
+    for (int y = 0; y < size; y++) {
+      for (int x = 0; x < size; x++) {
+        int dx = x - size ~/ 2;
+        int dy = y - size ~/ 2;
+        // Check if the pixel lies within a circle (distance from the center)
+        if (dx * dx + dy * dy <= (size / 2) * (size / 2)) {
+          circularImage.setPixel(x, y, resizedImage.getPixel(x, y));
+        } else {
+          // // Set transparent color for outside circle
+          // circularImage.setPixel(
+          //     x, y, img.ColorRgba8(0, 0, 0, 0)); // Transparent
+        }
+      }
+    }
+
+    // Convert the image back to bytes
+    Uint8List circleBytes = Uint8List.fromList(img.encodePng(circularImage));
+
+    // Return the BitmapDescriptor created from the circular image
+    return BitmapDescriptor.fromBytes(circleBytes);
+  }
+
   Future<LocationResult> showPlacePicker(context) async {
+    // Permission.locationAlways.request();
+    if (Platform.isAndroid) {
+      Permission.location.request();
+    } else {
+      Permission.locationAlways.request();
+    }
     LocationResult result = await Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => PlacePicker(
-              AppStrings.GOOGLE_API_KEY,
-            )));
+        builder: (context) => PlacePicker(AppStrings.GOOGLE_API_KEY)));
     return result;
   }
+
   // saveFCMToken()async{
   //   var t = SharedPreference().getFcmToken();
   //   log("getFcmToken ${t}");

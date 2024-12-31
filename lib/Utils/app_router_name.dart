@@ -3,6 +3,8 @@ class AppRouteName {
   static const String SPLASH_SCREEN_ROUTE = "/";
   static const String PRE_LOGIN_SCREEN_ROUTE = "/pre_login_screen";
   static const String ROLE_SELECTION = "/role_selection";
+  static const String FORGOT_PASSWORD_ROUTE = "/forgotPassword";
+  static const String CHANGE_PASSWORD_ROUTE = "/changePassword";
   static const String SCAN_QR_ROUTE = "/scan-qr";
   static const String FAVORITE_ROUTE = "/favorite";
   static const String LOYALTY_ROUTE = "/loyalty";
@@ -12,11 +14,8 @@ class AppRouteName {
   static const String CREATE_OFFER_ROUTE = "/create-offer";
   static const String SUBSCRIPTION_SCREEN_ROUTE = "/subscription-screen";
 
-
   static const String CHECKOUT_ROUTE = "/checkout";
   static const String BOOKING_DETAIL_ROUTE = "/booking_detail";
-
-
 
   static const String OPTION_SCREEN_ROUTE = "/option_screen";
   static const String SIGNUP_SCREEN_ROUTE = "/signup_screen";
@@ -39,8 +38,8 @@ class AppRouteName {
   static const String PAYMENT_HISTORY_ROUTE = "/payment-history";
   static const String CANCEL_SESSIONS_ROUTE = "/cancel-sessions";
   static const String FAQ_SCREEN_ROUTE = "/faq-screen";
-
-
+  static const TIME_SCHEDULING_EDIT_SCREEN_ROUTE =
+      "/timeSchedulingEditScreenRoute";
 
   static const String SETTINGS_ROUTE = "/settings";
   static const String ADD_CARD_ROUTE = "/add-card";
@@ -49,5 +48,4 @@ class AppRouteName {
   static const String CHAT_SCREEN_ROUTE = "/chat-screen";
   static const String CONTENT_SCREEN = "/content-screen";
   static const String ALL_REVIEWS_ROUTE = "/all-reviews";
-
 }

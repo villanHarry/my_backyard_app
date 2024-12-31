@@ -6,6 +6,7 @@ import 'package:backyard/Component/custom_padding.dart';
 import 'package:backyard/Model/menu_model.dart';
 import 'package:backyard/Service/app_network.dart';
 import 'package:backyard/Service/auth_apis.dart';
+import 'package:backyard/View/Authentication/change_password.dart';
 import 'package:backyard/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:backyard/Component/custom_buttom.dart';
@@ -49,6 +50,12 @@ class _SettingsState extends State<Settings> {
     getData();
   }
 
+  bool get getBusinesses =>
+      (navigatorKey.currentContext?.read<UserController>().isSwitch ?? false)
+          ? false
+          : navigatorKey.currentContext?.read<UserController>().user?.role ==
+              Role.Business;
+
   @override
   Widget build(Build) {
     return BaseView(
@@ -60,11 +67,61 @@ class _SettingsState extends State<Settings> {
             children: [
               CustomAppBar(
                 screenTitle: "Settings",
-                leading: business ? MenuIcon() : BackButton(),
-                trailing: business ? NotificationIcon() : null,
+                leading: getBusinesses ? MenuIcon() : BackButton(),
+                trailing: getBusinesses ? NotificationIcon() : null,
                 bottom: 2.h,
               ),
-              showBarberList(l: business ? businessList : userList)
+              Consumer<UserController>(builder: (context, val, _) {
+                return (val.user?.role == Role.Business)
+                    ? Padding(
+                        padding: EdgeInsets.only(left: 10.sp, right: 10.sp),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: MyColors().whiteColor,
+                            borderRadius: BorderRadius.circular(100),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(.2),
+                                blurRadius: 10.0,
+                                offset: const Offset(0, 5),
+                                spreadRadius: 2.0, //extend the shadow
+                              )
+                            ],
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 15.sp, vertical: 15.sp),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const MyText(
+                                  title: "Switch User",
+                                  fontWeight: FontWeight.w500,
+                                  size: 15),
+                              CustomSwitch(
+                                switchValue: val.isSwitch,
+                                toggleColor: MyColors().primaryColor,
+                                inActiveColor:
+                                    MyColors().greyColor3.withOpacity(.2),
+                                onChange: (v) {},
+                                onChange2: (v) {
+                                  val.setSwitch(v);
+                                  // AppNavigation.navigateToRemovingAll(
+                                  //     AppRouteName.HOME_SCREEN_ROUTE);
+                                  Navigator.popUntil(
+                                      navigatorKey.currentContext!,
+                                      (route) => route.isFirst);
+                                  Navigator.pushReplacementNamed(
+                                      navigatorKey.currentContext!,
+                                      AppRouteName.HOME_SCREEN_ROUTE);
+                                },
+                              )
+                            ],
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              }),
+              showBarberList(l: business ? businessList : userList),
             ],
           )),
     );
@@ -135,6 +192,12 @@ class _SettingsState extends State<Settings> {
               });
         }),
     MenuModel(
+        name: 'Change Password',
+        onTap: () {
+          AppNavigation.navigateTo(AppRouteName.CHANGE_PASSWORD_ROUTE,
+              arguments: const ChangePasswordArguments(fromSettings: true));
+        }),
+    MenuModel(
         name: 'Subscriptions',
         onTap: () {
           AppNavigation.navigateTo(AppRouteName.SUBSCRIPTION_SCREEN_ROUTE);
@@ -173,12 +236,12 @@ class _SettingsState extends State<Settings> {
                   contentType: AppStrings.TERMS_AND_CONDITION_TYPE,
                   url: 'https://www.google.com/'));
         }),
-    MenuModel(
-        name: 'Payment Details',
-        onTap: () {
-          AppNavigation.navigateTo(AppRouteName.PAYMENT_METHOD_ROUTE,
-              arguments: ScreenArguments(fromSettings: true));
-        }),
+    // MenuModel(
+    //     name: 'Payment Details',
+    //     onTap: () {
+    //       AppNavigation.navigateTo(AppRouteName.PAYMENT_METHOD_ROUTE,
+    //           arguments: ScreenArguments(fromSettings: true));
+    //     }),
     MenuModel(
         name: 'Delete Account',
         onTap: () {
@@ -206,6 +269,12 @@ class _SettingsState extends State<Settings> {
               });
         }),
     MenuModel(
+        name: 'Change Password',
+        onTap: () {
+          AppNavigation.navigateTo(AppRouteName.CHANGE_PASSWORD_ROUTE,
+              arguments: const ChangePasswordArguments(fromSettings: true));
+        }),
+    MenuModel(
         name: 'Subscriptions',
         onTap: () {
           AppNavigation.navigateTo(AppRouteName.SUBSCRIPTION_SCREEN_ROUTE);
@@ -230,8 +299,9 @@ class _SettingsState extends State<Settings> {
                 borderRadius: BorderRadius.circular(100),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(.4),
+                    color: Colors.grey.withOpacity(.2),
                     blurRadius: 10.0,
+                    offset: const Offset(0, 5),
                     spreadRadius: 2.0, //extend the shadow
                   )
                 ],
@@ -244,7 +314,7 @@ class _SettingsState extends State<Settings> {
               // )
               ,
               padding: EdgeInsets.symmetric(horizontal: 15.sp, vertical: 15.sp),
-              margin: EdgeInsets.only(bottom: 1.h),
+              margin: EdgeInsets.only(bottom: 1.5.h),
               // padding: EdgeInsets.all(2.w)+EdgeInsets.symmetric(horizontal: 2.w),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
